@@ -3,7 +3,11 @@
 import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
 
-export function LoginForm() {
+interface Props {
+  callback?: string;
+}
+
+export function LoginForm({ callback = "/dashboard" }: Props) {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [error, setError] = useState<string>("");
@@ -16,7 +20,7 @@ export function LoginForm() {
     try {
       const { error: err } = await authClient.signIn.magicLink({
         email: email.trim().toLowerCase(),
-        callbackURL: "/dashboard",
+        callbackURL: callback,
       });
 
       if (err) {
@@ -34,10 +38,7 @@ export function LoginForm() {
 
   if (status === "sent") {
     return (
-      <div
-        className="surface p-7"
-        style={{ borderColor: "rgba(31,110,104,0.4)" }}
-      >
+      <div>
         <p
           className="font-mono text-[0.72rem] tracking-[0.12em] uppercase"
           style={{ color: "var(--petrol)" }}
@@ -46,8 +47,9 @@ export function LoginForm() {
         </p>
         <h3 className="h3 mt-3">Wir haben dir den Link geschickt.</h3>
         <p className="mt-3 text-[0.95rem] leading-relaxed" style={{ color: "var(--soft)" }}>
-          Falls er nicht in 1-2 Minuten ankommt: schau im Spam-Ordner, oder
-          versuch es nochmal.
+          An <b>{email}</b>. Klick rein, du landest direkt im Dashboard. Falls
+          er nicht in 1-2 Minuten ankommt: schau im Spam-Ordner, oder
+          versuch&apos;s nochmal.
         </p>
         <button
           type="button"

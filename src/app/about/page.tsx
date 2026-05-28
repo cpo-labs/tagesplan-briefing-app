@@ -10,25 +10,27 @@ export const metadata = {
 export default function AboutPage() {
   return (
     <>
-      <section
-        className="grain"
-        style={{ background: "var(--cream)", color: "var(--ink)" }}
-      >
+      <header className="pagehero accent--petrol">
+        <span className="pagehero__blob" aria-hidden />
         <SiteHeader cta={{ href: "/login", label: "Briefing erzeugen" }} />
 
-        <div className="gut" style={{ padding: "4rem 0 5rem", maxWidth: "62rem", margin: "0 auto" }}>
-          <p className="eyebrow">So funktioniert&apos;s</p>
-          <h1 className="display mt-6 text-[clamp(2.4rem,5vw,4rem)] leading-[0.95]">
+        <div className="pagehero__in">
+          <p className="pagehero__tag">So funktioniert&apos;s</p>
+          <h1 className="pagehero__title">
             Was passiert,<br />
-            wenn du <em style={{ color: "var(--coral)", fontStyle: "normal" }}>einen Link</em> teilst?
+            wenn du <em>einen Link</em> teilst?
           </h1>
-          <p className="lead mt-6">
-            Kurz: Wir holen einmalig deinen Kalender ab, picken die Termine fuer den
-            gewaehlten Tag, recherchieren pro Termin und schreiben ein Briefing.
-            Permalink, teilbar, in deinem Account hinterlegt.
+          <p className="pagehero__sub">
+            Kurz: Wir holen einmalig deinen Kalender ab, picken die Termine
+            fuer den gewaehlten Tag, recherchieren pro Termin und schreiben
+            ein Briefing. Permalink, teilbar, in deinem Account hinterlegt.
           </p>
+        </div>
+      </header>
 
-          <div className="mt-14 space-y-12">
+      <section className="toolpage">
+        <div className="toolpage__in" style={{ maxWidth: "62rem" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "clamp(2rem,3.5vw,3rem)" }}>
             <Step
               num="01"
               title="Du gibst uns einen iCal-Link"
@@ -56,28 +58,34 @@ export default function AboutPage() {
             />
           </div>
 
-          <div className="mt-16 surface p-8 md:p-10">
+          <div
+            style={{
+              marginTop: "clamp(3rem,5vw,5rem)",
+              padding: "clamp(2rem,3vw,2.6rem)",
+              background: "#fff",
+              border: "1px solid rgba(24,20,16,0.1)",
+              borderRadius: "var(--rl)",
+              boxShadow: "0 18px 40px -28px rgba(24,20,16,0.2)",
+            }}
+          >
             <p className="eyebrow">Limits</p>
             <h2 className="h3 mt-3">3 Briefings pro Mail-Adresse. Das ist Absicht.</h2>
             <p className="mt-4 leading-relaxed" style={{ color: "var(--soft)" }}>
-              Das Tool ist ein Lead-Magnet, kein SaaS. Christian sponsort die API-Kosten,
-              damit du es ausprobieren kannst. Wenn du es danach oefter brauchst, schreib
-              ihm — er hebt das Limit hoch, oder ihr ueberlegt, ob daraus etwas richtiges
-              wird.
+              Das Tool ist ein Lead-Magnet, kein SaaS. Christian sponsort die
+              API-Kosten, damit du es ausprobieren kannst. Wenn du es danach
+              oefter brauchst, schreib ihm — er hebt das Limit hoch, oder ihr
+              ueberlegt, ob daraus etwas richtiges wird.
             </p>
-            <Link
-              href={CONTACT_MAILTO_TAGESPLAN}
-              className="pill pill--ink pill--arrow mt-6"
-            >
+            <Link href={CONTACT_MAILTO_TAGESPLAN} className="pill pill--ink pill--arrow mt-6">
               Christian schreiben
             </Link>
           </div>
 
-          <div className="mt-12">
+          <div style={{ marginTop: "clamp(2.5rem,4vw,3.5rem)" }}>
             <p className="eyebrow">Datenschutz</p>
             <ul
-              className="mt-5 space-y-3 text-[0.95rem] leading-relaxed"
-              style={{ color: "var(--soft)" }}
+              className="mt-5 space-y-3"
+              style={{ color: "var(--soft)", fontSize: "0.95rem", lineHeight: 1.6 }}
             >
               <li>Deine Mail-Adresse: fuer Login und Rate-Limit, nicht fuer Newsletter.</li>
               <li>Dein iCal-Link: im Briefing-Datensatz hinterlegt. Du kannst loeschen lassen (Mail an Christian).</li>
@@ -86,25 +94,45 @@ export default function AboutPage() {
             </ul>
           </div>
         </div>
-
-        <SiteFooter />
       </section>
+
+      <SiteFooter />
     </>
   );
 }
 
 function Step({ num, title, body }: { num: string; title: string; body: string }) {
   return (
-    <div className="grid gap-4 md:grid-cols-[5rem_1fr] md:gap-8">
+    <div
+      style={{
+        display: "grid",
+        gap: "1rem 2rem",
+        gridTemplateColumns: "5rem 1fr",
+        alignItems: "start",
+      }}
+    >
       <span
-        className="font-mono text-[1.1rem] font-semibold tracking-wider"
-        style={{ color: "var(--coral)" }}
+        style={{
+          fontFamily: "var(--mono)",
+          fontSize: "1.1rem",
+          fontWeight: 700,
+          letterSpacing: "0.06em",
+          color: "var(--petrol)",
+        }}
       >
         {num}
       </span>
       <div>
-        <h3 className="h3">{title}</h3>
-        <p className="mt-3 leading-relaxed" style={{ color: "var(--soft)" }}>
+        <h3
+          style={{
+            fontWeight: 600,
+            fontSize: "1.25rem",
+            letterSpacing: "-0.015em",
+          }}
+        >
+          {title}
+        </h3>
+        <p className="mt-3" style={{ color: "var(--soft)", lineHeight: 1.65 }}>
           {body}
         </p>
       </div>

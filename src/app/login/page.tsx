@@ -7,45 +7,68 @@ import { LoginForm } from "./LoginForm";
 
 export const dynamic = "force-dynamic";
 
-export default async function LoginPage() {
+interface Props {
+  searchParams: Promise<{ from?: string }>;
+}
+
+export default async function LoginPage({ searchParams }: Props) {
   const session = await auth.api.getSession({ headers: await headers() });
+  const sp = await searchParams;
+  const fromTab = sp.from && ["ical", "share", "google"].includes(sp.from) ? sp.from : null;
+  const callback = fromTab ? `/dashboard?from=${fromTab}` : "/dashboard";
+
   if (session?.user) {
-    redirect("/dashboard");
+    redirect(callback);
   }
 
   return (
     <>
-      <section
-        className="grain min-h-svh flex flex-col"
-        style={{ background: "var(--cream)", color: "var(--ink)" }}
-      >
+      <header className="pagehero accent--sand">
+        <span className="pagehero__blob" aria-hidden />
         <SiteHeader />
-        <div
-          className="flex-1 flex items-center justify-center"
-          style={{ padding: "3rem var(--gut) 5rem" }}
-        >
-          <div className="w-full max-w-[28rem]">
-            <p className="eyebrow">Login per Magic Link</p>
-            <h1 className="display mt-6 text-[clamp(2.4rem,4.5vw,3.6rem)] leading-none">
-              Deine <em style={{ color: "var(--coral)", fontStyle: "normal" }}>Mail</em>,<br />
-              dein Link, fertig.
-            </h1>
-            <p className="lead mt-5">
-              Wir schicken dir einen Login-Link. Keine Passwoerter. Der Link laeuft
-              nach 15 Minuten ab.
-            </p>
-            <div className="mt-9">
-              <LoginForm />
-            </div>
-            <p className="mt-7 text-[0.82rem]" style={{ color: "var(--soft)" }}>
-              Mit dem Login akzeptierst du, dass wir deine Mail-Adresse speichern.
-              Wir nutzen sie ausschliesslich fuer den Login und das Rate-Limit
-              (3 Briefings pro Mail).
+
+        <div className="pagehero__in">
+          <p className="pagehero__tag">Login per Magic Link</p>
+          <h1 className="pagehero__title">
+            Deine <em>Mail</em>, dein Link, fertig.
+          </h1>
+          <p className="pagehero__sub">
+            Wir schicken dir einen Login-Link. Keine Passwoerter. Der Link
+            laeuft nach 15 Minuten ab.
+          </p>
+        </div>
+      </header>
+
+      <section className="toolpage">
+        <div className="toolpage__in">
+          <div
+            style={{
+              maxWidth: "32rem",
+              padding: "clamp(1.6rem,2.4vw,2rem) clamp(1.6rem,2.4vw,2.2rem)",
+              background: "#fff",
+              border: "1px solid rgba(24,20,16,0.1)",
+              borderRadius: "var(--rl)",
+              boxShadow: "0 18px 40px -28px rgba(24,20,16,0.2)",
+            }}
+          >
+            <LoginForm callback={callback} />
+            <p
+              className="mt-7"
+              style={{
+                fontSize: "0.82rem",
+                lineHeight: 1.55,
+                color: "var(--soft)",
+              }}
+            >
+              Mit dem Login akzeptierst du, dass wir deine Mail-Adresse
+              speichern. Wir nutzen sie ausschliesslich fuer den Login und das
+              Rate-Limit (3 Briefings pro Mail).
             </p>
           </div>
         </div>
-        <SiteFooter />
       </section>
+
+      <SiteFooter />
     </>
   );
 }

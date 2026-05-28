@@ -13,11 +13,18 @@ import { CreateBriefingForm } from "./CreateBriefingForm";
 
 export const dynamic = "force-dynamic";
 
-export default async function DashboardPage() {
+interface Props {
+  searchParams: Promise<{ from?: string }>;
+}
+
+export default async function DashboardPage({ searchParams }: Props) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user?.email) {
     redirect("/login");
   }
+
+  const sp = await searchParams;
+  const initialTab = parseTab(sp.from);
 
   const email = session.user.email.toLowerCase();
   const past = await db
@@ -33,46 +40,46 @@ export default async function DashboardPage() {
 
   return (
     <>
-      <section
-        className="grain min-h-svh flex flex-col"
-        style={{ background: "var(--cream)", color: "var(--ink)" }}
-      >
-        <SiteHeader />
+      <header className="pagehero accent--sand">
+        <span className="pagehero__blob" aria-hidden />
+        <SiteHeader cta={{ href: "/api/sign-out", label: "Abmelden" }} />
 
-        <div className="gut" style={{ padding: "3rem 0 4rem" }}>
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
-            <div>
-              <p className="eyebrow">Dein Schreibtisch</p>
-              <h1 className="display text-[clamp(2.4rem,5vw,4.4rem)] mt-5 leading-none">
-                Neues <em style={{ color: "var(--coral)", fontStyle: "normal" }}>Briefing</em>
-              </h1>
-              <p className="lead mt-4">
-                Eingeloggt als <span style={{ color: "var(--ink)", fontWeight: 600 }}>{email}</span>.
-                Noch <span style={{ color: "var(--coral)", fontWeight: 600 }}>{remaining}</span>{" "}
-                von <span style={{ color: "var(--ink)" }}>{env.limitPerEmail}</span> Briefings frei.
-              </p>
-            </div>
-            <form action="/api/sign-out" method="post">
-              <Link
-                href="/api/sign-out"
-                className="font-mono text-[0.72rem] tracking-[0.1em] uppercase hover:text-coral transition"
-                style={{ color: "var(--soft)" }}
-              >
-                Abmelden
-              </Link>
-            </form>
-          </div>
+        <div className="pagehero__in">
+          <p className="pagehero__tag">Dein Schreibtisch</p>
+          <h1 className="pagehero__title">
+            Neues <em>Briefing</em>
+          </h1>
+          <p className="pagehero__sub">
+            Eingeloggt als{" "}
+            <b style={{ color: "var(--cream)" }}>{email}</b>. Noch{" "}
+            <b style={{ color: "var(--sand)" }}>{remaining}</b> von{" "}
+            <b>{env.limitPerEmail}</b> Briefings frei.
+          </p>
+        </div>
+      </header>
 
+      <section className="toolpage">
+        <div className="toolpage__in">
           {remaining > 0 ? (
-            <CreateBriefingForm />
+            <CreateBriefingForm initialTab={initialTab} />
           ) : (
             <RateLimitedCard />
           )}
 
           {past.length > 0 && (
-            <section className="mt-16">
-              <h2 className="h3">Frueher generiert</h2>
-              <ul className="mt-6 space-y-3">
+            <section style={{ marginTop: "clamp(3rem, 6vw, 5rem)" }}>
+              <p className="eyebrow">Frueher generiert</p>
+              <h2
+                className="mt-4"
+                style={{
+                  fontWeight: 600,
+                  fontSize: "clamp(1.4rem,2.4vw,1.8rem)",
+                  letterSpacing: "-0.02em",
+                }}
+              >
+                Deine Briefings
+              </h2>
+              <ul className="mt-7 space-y-3">
                 {past.map((b) => (
                   <li key={b.id}>
                     <Link
@@ -81,7 +88,10 @@ export default async function DashboardPage() {
                     >
                       <div className="flex flex-col gap-1">
                         <span className="font-semibold text-[1rem]">{b.title}</span>
-                        <span className="font-mono text-[0.7rem] uppercase tracking-wider text-soft">
+                        <span
+                          className="font-mono text-[0.7rem] uppercase tracking-wider"
+                          style={{ color: "var(--soft)" }}
+                        >
                           {formatDate(b.createdAt)} &middot; Status: {b.status}
                         </span>
                       </div>
@@ -98,11 +108,16 @@ export default async function DashboardPage() {
             </section>
           )}
         </div>
-
-        <SiteFooter />
       </section>
+
+      <SiteFooter />
     </>
   );
+}
+
+function parseTab(raw: string | undefined): "ical" | "share" | "google" {
+  if (raw === "share" || raw === "google") return raw;
+  return "ical";
 }
 
 function RateLimitedCard() {

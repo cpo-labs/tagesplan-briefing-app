@@ -2,138 +2,159 @@ import Link from "next/link";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { CONTACT_EMAIL } from "@/lib/constants";
+import { LandingEmailGate } from "./LandingEmailGate";
+
+export const dynamic = "force-dynamic";
 
 export default function LandingPage() {
   return (
     <>
-      <section
-        className="grain grain--dark relative min-h-svh overflow-hidden"
-        style={{ background: "var(--ink-deep)", color: "var(--cream)", isolation: "isolate" }}
-      >
-        <SiteHeader dark cta={{ href: "/login", label: "Briefing erzeugen" }} />
+      {/* ─── Pagehero (Sand-Accent, asymmetrisch) ────────────────── */}
+      <header className="pagehero accent--sand">
+        <span className="pagehero__blob" aria-hidden />
+        <SiteHeader cta={{ href: "/login", label: "Login" }} />
 
-        {/* Atmosphäre */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -top-[26vmax] -right-[22vmax] h-[58vmax] w-[58vmax] rounded-full"
-          style={{
-            background: "var(--coral)",
-            filter: "blur(72px)",
-            opacity: 0.22,
-          }}
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -bottom-[32vmax] -left-[22vmax] h-[60vmax] w-[60vmax] rounded-full"
-          style={{
-            background: "var(--petrol)",
-            filter: "blur(78px)",
-            opacity: 0.18,
-          }}
-        />
+        <div className="pagehero__in">
+          <p className="pagehero__tag">Werkzeug &middot; AppSales Labs</p>
+          <h1 className="pagehero__title">
+            Wach auf, <em>jeder Termin</em><br />
+            ist schon gebrieft.
+          </h1>
+          <p className="pagehero__sub">
+            Du gibst uns deinen Kalender. Wir liefern ein 1-Pager-Briefing pro
+            Termin: Firma, Person, juengste News, Talking Points, Konzept-Idee.
+            Recherche von Tavily, Synthese von Claude.
+          </p>
 
-        <div
-          className="relative grid items-center gap-12 md:gap-16 md:grid-cols-[1.15fr_1fr]"
-          style={{ padding: "4rem var(--gut) 6rem" }}
-        >
-          {/* Text */}
-          <div className="max-w-[36rem]">
-            <p
-              className="fade-up font-mono uppercase tracking-[0.18em] text-[0.78rem]"
-              style={{ color: "var(--coral)" }}
-            >
-              <span
-                aria-hidden
-                className="inline-block w-6 h-[2px] align-middle mr-3"
-                style={{ background: "var(--coral)" }}
-              />
-              Lead-Magnet aus den Labs
-            </p>
-            <h1 className="display fade-up fade-up--delay-1 mt-6">
-              Kalender rein.<br />
-              <em>Briefing</em> raus.
-            </h1>
-            <p className="lead fade-up fade-up--delay-2 mt-6 text-cream/85">
-              Klebe deinen iCal-Link ein, waehle einen Tag, und du bekommst pro Termin
-              ein Briefing: Firma, Person, juengste News, Talking Points, Konzept-Idee.
-              Recherche von Tavily, Synthese von Claude.
-            </p>
-            <div className="fade-up fade-up--delay-3 mt-9 flex flex-wrap items-center gap-4">
-              <Link href="/login" className="pill pill--coral pill--arrow">
-                Login per Magic Link
-              </Link>
-              <Link href="#how" className="pill pill--ghost-dark">
-                So funktioniert&apos;s
-              </Link>
+          <div style={{ marginTop: "2.4rem", maxWidth: "32rem" }}>
+            <LandingEmailGate />
+          </div>
+
+          <p
+            style={{
+              marginTop: "1.4rem",
+              fontFamily: "var(--mono)",
+              fontSize: "0.74rem",
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              color: "rgba(250,247,242,0.62)",
+            }}
+          >
+            Kostenlos &middot; 3 Briefings pro E-Mail &middot; kein Newsletter
+          </p>
+        </div>
+      </header>
+
+      {/* ─── Toolpage: drei Wege ─────────────────────────────────── */}
+      <section className="toolpage" id="how">
+        <div className="toolpage__in">
+          <div className="toolpage__intro">
+            <div>
+              <p className="eyebrow">Drei Wege rein</p>
+              <h2 className="toolpage__heading">
+                Such dir aus, wie du uns deinen Kalender gibst.
+              </h2>
             </div>
-            <p className="fade-up fade-up--delay-3 mono-label mt-9" style={{ color: "rgba(250,247,242,0.5)" }}>
-              <span className="dot-pulse mr-2 align-middle" />
-              MVP &middot; 3 Briefings pro Mail-Adresse frei
+            <p className="toolpage__copy">
+              Wir bauen die Pipeline so, wie es fuer dich Sinn ergibt. iCal-Link
+              ist am schnellsten, Google-OAuth am bequemsten, Service-Mail am
+              sichersten. Alle drei landen am selben Briefing.
             </p>
           </div>
 
-          {/* Visual: stacked cards */}
-          <div className="relative h-[28rem] md:h-[32rem]">
-            <FloatingCardCalendar />
-            <FloatingCardBrief />
-            <FloatingCardSnippet />
+          <div className="calsrc-grid">
+            <article className="calsrc accent--petrol">
+              <p className="calsrc__cap">
+                Variante <b>A</b>
+              </p>
+              <h3 className="calsrc__title">iCal-URL einkleben</h3>
+              <p className="calsrc__copy">
+                Google, Apple, Outlook — alle koennen eine geheime, read-only
+                iCal-Adresse exportieren. Schnellster Weg, kein OAuth-Eiertanz.
+              </p>
+              <Link href="/login?from=ical" className="calsrc__meta">
+                Sofort starten
+              </Link>
+            </article>
+
+            <article className="calsrc accent--sand">
+              <p className="calsrc__cap">
+                Variante <b>B</b>
+              </p>
+              <h3 className="calsrc__title">Service-Mail einladen</h3>
+              <p className="calsrc__copy">
+                Du teilst deinen Google-Kalender mit{" "}
+                <code
+                  style={{
+                    fontFamily: "var(--mono)",
+                    fontSize: "0.88em",
+                    background: "var(--cream-2)",
+                    padding: "0.06em 0.34em",
+                    borderRadius: "5px",
+                    color: "var(--coral-deep)",
+                  }}
+                >
+                  briefing@appsales-consulting.com
+                </code>
+                . Read-only. Wir pollen, sobald du ein Briefing willst.
+              </p>
+              <Link href="/login?from=share" className="calsrc__meta">
+                Anleitung sehen
+              </Link>
+            </article>
+
+            <article className="calsrc accent--coral">
+              <p className="calsrc__cap">
+                Variante <b>C</b>
+              </p>
+              <h3 className="calsrc__title">Mit Google verbinden</h3>
+              <p className="calsrc__copy">
+                OAuth-Login mit Google. Bequemster Weg fuer Workspace-Nutzer.
+                Wir lesen ausschliesslich deine Termine — sonst nichts.
+              </p>
+              <Link href="/login?from=google" className="calsrc__meta">
+                Verbinden
+              </Link>
+            </article>
           </div>
         </div>
       </section>
 
-      {/* Wie es funktioniert */}
+      {/* ─── Was du bekommst ─────────────────────────────────────── */}
       <section
-        id="how"
-        className="grain"
-        style={{ background: "var(--cream)", padding: "clamp(5rem,9vw,9rem) 0" }}
+        style={{
+          background: "var(--cream-2)",
+          padding: "clamp(4rem,8vw,7rem) 0",
+        }}
       >
-        <div className="gut mb-10 md:mb-16 max-w-[64rem]">
-          <p className="eyebrow">Drei Schritte</p>
-          <h2 className="h2 mt-4">
-            Vom Kalender zum <em style={{ color: "var(--coral)", fontStyle: "normal" }}>Briefing</em> in zwei Minuten.
-          </h2>
-        </div>
-
-        <div className="gut grid gap-7 md:grid-cols-3">
-          <StepCard
-            num="01"
-            title="iCal-Link einkleben"
-            body="Google, Apple, Outlook — alle koennen einen geheimen iCal-Link exportieren. Du gibst ihn dem Tool, sonst nichts. Read-only, kein OAuth-Eiertanz."
-            tone="petrol"
-          />
-          <StepCard
-            num="02"
-            title="Datum waehlen"
-            body="Heute oder morgen. Tool zieht die Termine fuer den Tag, schaut sich Titel und Attendees an und leitet Firma und Person ab."
-            tone="sand"
-          />
-          <StepCard
-            num="03"
-            title="Briefing lesen"
-            body="Pro Termin: Web-Recherche (Tavily) plus Synthese (Claude Sonnet 4.6). Status, juengste News, Talking Points, ein Konzept-Vorschlag. Mit Quellenangabe."
-            tone="coral"
-          />
-        </div>
-      </section>
-
-      {/* Was du bekommst */}
-      <section
-        className="grain"
-        style={{ background: "var(--cream-2)", padding: "clamp(5rem,9vw,9rem) 0" }}
-      >
-        <div className="gut max-w-[78rem] grid gap-12 md:grid-cols-[1.1fr_1fr] items-center">
+        <div
+          className="grid items-start gap-[clamp(2rem,4vw,4rem)] mx-auto md:grid-cols-[1.1fr_1fr]"
+          style={{
+            maxWidth: "78rem",
+            paddingLeft: "var(--gut)",
+            paddingRight: "var(--gut)",
+          }}
+        >
           <div>
             <p className="eyebrow">Pro Termin</p>
-            <h2 className="h2 mt-4">Eine Karte, die du wirklich lesen willst.</h2>
-            <p className="lead mt-5">
-              Keine generischen "Hier sind 7 Punkte ueber das Unternehmen"-Texte.
-              Direkte Lage-Einschaetzung, drei bis fuenf Anker fuer das Gespraech,
-              ein konkreter Vorschlag fuers Konzept.
-            </p>
-            <ul
-              className="mt-7 space-y-3 text-[0.96rem] leading-relaxed"
-              style={{ color: "var(--ink)" }}
+            <h2
+              className="mt-4"
+              style={{
+                fontWeight: 600,
+                fontSize: "clamp(1.7rem,3.2vw,2.4rem)",
+                lineHeight: 1.08,
+                letterSpacing: "-0.025em",
+                maxWidth: "24ch",
+              }}
             >
+              Eine Karte, die du wirklich lesen willst.
+            </h2>
+            <p className="mt-5" style={{ color: "var(--soft)", lineHeight: 1.65, maxWidth: "44ch" }}>
+              Keine generischen "Hier sind 7 Punkte ueber das Unternehmen"-Texte.
+              Direkte Lage-Einschaetzung, drei bis fuenf Anker fuers Gespraech,
+              ein konkreter Vorschlag fuer das Konzept.
+            </p>
+            <ul className="mt-7 space-y-3" style={{ color: "var(--ink)", fontSize: "0.97rem", lineHeight: 1.55 }}>
               <Feature>Firmenkontext (Branche, Standort, Produkt)</Feature>
               <Feature>Juengste News der letzten 90 Tage</Feature>
               <Feature>Personen-Hinweise (Rolle, Hintergrund)</Feature>
@@ -147,35 +168,114 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* CTA */}
+      {/* ─── Pipeline-Erklaerung ─────────────────────────────────── */}
+      <section style={{ background: "var(--cream)", padding: "clamp(4rem,8vw,7rem) 0" }}>
+        <div
+          style={{
+            maxWidth: "78rem",
+            margin: "0 auto",
+            paddingLeft: "var(--gut)",
+            paddingRight: "var(--gut)",
+          }}
+        >
+          <p className="eyebrow">Pipeline</p>
+          <h2
+            className="mt-4"
+            style={{
+              fontWeight: 600,
+              fontSize: "clamp(1.7rem,3.2vw,2.4rem)",
+              lineHeight: 1.08,
+              letterSpacing: "-0.025em",
+              maxWidth: "32ch",
+            }}
+          >
+            Drei Schritte zwischen Kalender und Briefing.
+          </h2>
+
+          <div className="mt-12 grid gap-6 md:grid-cols-3">
+            <StepNum
+              num="01"
+              title="Kalender holen"
+              body="iCal-Link, Service-Mail-Share oder OAuth. Wir holen die Termine fuer den gewaehlten Tag, parsen Titel und Attendees, leiten Firma und Person ab."
+              tone="petrol"
+            />
+            <StepNum
+              num="02"
+              title="Recherche"
+              body="Tavily liefert pro Termin saubere Snippets zu Firma, juengsten News und Person. Kein Scraping, keine Bullshit-Quellen — was reinkommt, ist verlinkbar."
+              tone="sand"
+            />
+            <StepNum
+              num="03"
+              title="Synthese"
+              body="Claude Sonnet 4.6 verdichtet zu einem Briefing: Status, Talking Points, Konzept-Vorschlag, offene Fragen. AI-Slop wird gefiltert."
+              tone="coral"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* ─── Bottom-CTA (dunkel) ─────────────────────────────────── */}
       <section
-        className="grain grain--dark relative overflow-hidden text-center"
+        className="grain grain--dark"
         style={{
           background: "var(--ink-deep)",
           color: "var(--cream)",
-          padding: "clamp(5rem,9vw,9rem) var(--gut)",
+          padding: "clamp(4rem,8vw,7rem) var(--gut)",
         }}
       >
-        <div
-          aria-hidden
-          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[40vmax] w-[40vmax] rounded-full pointer-events-none"
-          style={{ background: "var(--coral)", filter: "blur(80px)", opacity: 0.2 }}
-        />
-        <p className="eyebrow relative" style={{ color: "var(--coral)" }}>
-          Probiers aus
-        </p>
-        <h2 className="h2 mt-5 relative">Ein Login, drei Briefings, kein Bullshit.</h2>
-        <p className="lead mt-5 mx-auto relative text-cream/80">
-          Du bekommst einen Magic Link auf deine Mail-Adresse, klickst, bist drin.
-          Kein Passwort, kein Tracking, keine Newsletter.
-        </p>
-        <div className="mt-9 flex flex-wrap items-center justify-center gap-4 relative">
-          <Link href="/login" className="pill pill--coral pill--arrow">
-            Briefing erzeugen
-          </Link>
-          <Link href={`mailto:${CONTACT_EMAIL}`} className="pill pill--ghost-dark">
-            Christian schreiben
-          </Link>
+        <div style={{ maxWidth: "78rem", margin: "0 auto" }}>
+          <div className="grid items-end gap-[2.4rem] md:grid-cols-[1.4fr_1fr]">
+            <div>
+              <p
+                style={{
+                  fontFamily: "var(--mono)",
+                  fontSize: "0.78rem",
+                  letterSpacing: "0.16em",
+                  textTransform: "uppercase",
+                  color: "var(--coral)",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.6rem",
+                }}
+              >
+                <span style={{ width: "1.6rem", height: "2px", background: "var(--coral)" }} />
+                Probiers aus
+              </p>
+              <h2
+                style={{
+                  marginTop: "1.2rem",
+                  fontWeight: 600,
+                  fontSize: "clamp(2rem,4vw,3.2rem)",
+                  lineHeight: 1.04,
+                  letterSpacing: "-0.025em",
+                  maxWidth: "20ch",
+                }}
+              >
+                Ein Login, drei Briefings,<br />
+                kein Bullshit.
+              </h2>
+              <p
+                style={{
+                  marginTop: "1.4rem",
+                  color: "rgba(250,247,242,0.78)",
+                  lineHeight: 1.6,
+                  maxWidth: "42ch",
+                }}
+              >
+                Du bekommst einen Magic Link auf deine Mail. Klicken, drin sein.
+                Kein Passwort, kein Tracking, keine Newsletter.
+              </p>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
+              <Link href="/login" className="pill pill--coral pill--arrow">
+                Briefing erzeugen
+              </Link>
+              <Link href={`mailto:${CONTACT_EMAIL}`} className="pill pill--ghost-dark">
+                Christian schreiben
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -184,9 +284,9 @@ export default function LandingPage() {
   );
 }
 
-/* ─── Sub-components (kept local to keep the landing self-contained) ─ */
+/* ─── Helpers ─────────────────────────────────────────────────── */
 
-function StepCard({
+function StepNum({
   num,
   title,
   body,
@@ -197,22 +297,35 @@ function StepCard({
   body: string;
   tone: "coral" | "petrol" | "sand";
 }) {
-  const dot = { coral: "var(--coral)", petrol: "var(--petrol)", sand: "var(--sand)" }[tone];
+  const accent = { coral: "var(--coral)", petrol: "var(--petrol)", sand: "var(--sand)" }[tone];
   return (
-    <article className="surface relative p-7 md:p-9 flex flex-col gap-5 transition hover:-translate-y-1 hover:shadow-[0_30px_60px_-32px_rgba(24,20,16,0.35)]">
-      <div className="flex items-center justify-between">
+    <article
+      style={{
+        background: "#fff",
+        border: "1px solid rgba(24,20,16,0.08)",
+        borderRadius: "var(--rm)",
+        padding: "1.8rem 1.9rem 2rem",
+        display: "flex",
+        flexDirection: "column",
+        gap: "1rem",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <span
-          className="font-mono text-[0.75rem] tracking-[0.18em] uppercase"
-          style={{ color: "var(--soft)" }}
+          style={{
+            fontFamily: "var(--mono)",
+            fontSize: "0.78rem",
+            letterSpacing: "0.18em",
+            textTransform: "uppercase",
+            color: accent,
+          }}
         >
           {num}
         </span>
-        <span className="block h-2 w-2 rounded-full" style={{ background: dot }} />
+        <span style={{ display: "block", width: "0.6rem", height: "0.6rem", borderRadius: "100px", background: accent }} />
       </div>
-      <h3 className="h3">{title}</h3>
-      <p className="text-[0.96rem] leading-relaxed" style={{ color: "var(--soft)" }}>
-        {body}
-      </p>
+      <h3 style={{ fontWeight: 600, fontSize: "1.2rem", letterSpacing: "-0.015em" }}>{title}</h3>
+      <p style={{ fontSize: "0.95rem", lineHeight: 1.6, color: "var(--soft)" }}>{body}</p>
     </article>
   );
 }
@@ -222,202 +335,19 @@ function Feature({ children }: { children: React.ReactNode }) {
     <li className="flex items-start gap-3">
       <span
         aria-hidden
-        className="mt-2 block h-3 w-3 rounded-sm flex-none"
-        style={{ background: "var(--coral)" }}
+        className="mt-2 block h-2.5 w-2.5 rounded-sm flex-none"
+        style={{ background: "var(--sand)" }}
       />
       <span>{children}</span>
     </li>
   );
 }
 
-/* Floating card visuals — handgebaut, nicht von shadcn */
-
-function FloatingCardCalendar() {
-  return (
-    <div
-      className="absolute"
-      style={{
-        top: "8%",
-        left: "0%",
-        width: "70%",
-        transform: "rotate(-3deg)",
-        background: "linear-gradient(168deg,#262d33,#171c20)",
-        border: "1.5px solid rgba(250,247,242,0.22)",
-        borderRadius: "18px",
-        boxShadow: "0 50px 96px -40px rgba(0,0,0,0.85), inset 0 1px 0 rgba(250,247,242,0.08)",
-        color: "var(--cream)",
-      }}
-    >
-      <div
-        className="flex items-center gap-2 px-3 py-2"
-        style={{ borderBottom: "1px solid rgba(250,247,242,0.1)" }}
-      >
-        <span className="block h-2 w-2 rounded-full" style={{ background: "#ED6A5E" }} />
-        <span className="block h-2 w-2 rounded-full" style={{ background: "#E0B23C" }} />
-        <span className="block h-2 w-2 rounded-full" style={{ background: "#5BBF7A" }} />
-        <span
-          className="ml-3 font-mono text-[0.6rem] tracking-wider"
-          style={{ color: "rgba(250,247,242,0.5)" }}
-        >
-          Kalender · <b style={{ color: "var(--coral)" }}>Mi 28. Mai</b>
-        </span>
-      </div>
-      <div className="px-4 py-4 space-y-3">
-        <CalRow time="09:00" title="Briefing-Setup" note="Selbstgespraech" />
-        <CalRow time="10:30" title="Howden Group" note="Erstgespraech · DACH-Service" highlight />
-        <CalRow time="14:00" title="SATA GmbH" note="Folgegespraech · Pilot" highlight />
-        <CalRow time="16:15" title="Fokuszeit" note="Anti-Slop-Filter" />
-      </div>
-    </div>
-  );
-}
-
-function CalRow({
-  time,
-  title,
-  note,
-  highlight,
-}: {
-  time: string;
-  title: string;
-  note: string;
-  highlight?: boolean;
-}) {
-  return (
-    <div className="flex items-center gap-3">
-      <span
-        className="font-mono text-[0.66rem] w-12 flex-none"
-        style={{ color: highlight ? "var(--coral)" : "rgba(250,247,242,0.5)" }}
-      >
-        {time}
-      </span>
-      <div
-        className="flex-1 rounded-md px-3 py-2"
-        style={{
-          background: highlight
-            ? "linear-gradient(150deg,rgba(230,80,66,0.22),rgba(230,80,66,0.05))"
-            : "rgba(250,247,242,0.05)",
-          borderLeft: highlight
-            ? "2.5px solid var(--coral)"
-            : "2.5px solid rgba(250,247,242,0.18)",
-        }}
-      >
-        <div className="text-[0.86rem] font-semibold">{title}</div>
-        <div className="text-[0.7rem] mt-0.5" style={{ color: "rgba(250,247,242,0.6)" }}>
-          {note}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function FloatingCardBrief() {
-  return (
-    <div
-      className="absolute"
-      style={{
-        bottom: "0%",
-        right: "0%",
-        width: "62%",
-        transform: "rotate(4deg)",
-        background: "linear-gradient(158deg,#443c34 0%,#2f2720 52%,#221b15 100%)",
-        border: "1.5px solid rgba(250,247,242,0.22)",
-        borderRadius: "16px",
-        boxShadow: "0 46px 92px -42px rgba(0,0,0,0.8)",
-        color: "var(--cream)",
-        padding: "1.1rem 1.2rem 1.3rem",
-      }}
-    >
-      <div
-        className="font-mono text-[0.58rem] tracking-[0.1em] uppercase mb-3"
-        style={{ color: "var(--coral)" }}
-      >
-        <span
-          aria-hidden
-          className="inline-block w-2 h-2 rounded-sm mr-2 align-middle"
-          style={{ background: "var(--coral)" }}
-        />
-        Briefing · 10:30
-      </div>
-      <h4 className="text-[1rem] font-semibold leading-snug">Howden Group · DACH-Service</h4>
-      <p className="mt-2 text-[0.78rem] leading-relaxed text-cream/75">
-        Mittelstaendischer Ventilator-Hersteller, Howden hat den Bereich kuerzlich
-        in eigene GmbH ueberfuehrt. Ansprechpartner leitet Aftermarket.
-      </p>
-      <div className="mt-3 space-y-1.5">
-        <BriefDot label="Konzept" text="Service-Daten-Layer als gemeinsamer Layer" />
-        <BriefDot label="Anker" text="Kommt von SAP-Migration, sucht Mehrwert" />
-        <BriefDot label="News" text="Howden-Acquisition durch Chart Industries" />
-      </div>
-    </div>
-  );
-}
-
-function BriefDot({ label, text }: { label: string; text: string }) {
-  return (
-    <div className="flex gap-2 text-[0.72rem]">
-      <span
-        className="font-mono text-[0.55rem] tracking-wider uppercase flex-none"
-        style={{ color: "var(--coral)", paddingTop: "0.1rem" }}
-      >
-        {label}
-      </span>
-      <span className="text-cream/85">{text}</span>
-    </div>
-  );
-}
-
-function FloatingCardSnippet() {
-  return (
-    <div
-      className="absolute hidden md:block"
-      style={{
-        top: "60%",
-        left: "44%",
-        width: "32%",
-        transform: "rotate(-6deg)",
-        background: "var(--ink-deep)",
-        border: "1.5px solid rgba(95,224,208,0.3)",
-        borderRadius: "12px",
-        boxShadow: "0 32px 60px -28px rgba(0,0,0,0.8)",
-        color: "var(--cream)",
-        padding: "0.85rem 0.95rem",
-        fontFamily: "var(--mono)",
-        fontSize: "0.62rem",
-        lineHeight: 1.7,
-      }}
-    >
-      <div className="flex gap-1.5 mb-2">
-        <span className="block h-1.5 w-1.5 rounded-full bg-cream/25" />
-        <span className="block h-1.5 w-1.5 rounded-full bg-cream/25" />
-        <span className="block h-1.5 w-1.5 rounded-full bg-cream/25" />
-      </div>
-      <div>
-        <span style={{ color: "var(--coral)" }}>$</span> tavily
-        <span style={{ color: "rgba(250,247,242,0.5)" }}> --query </span>
-        <span style={{ color: "var(--sand)" }}>&quot;Howden Group News&quot;</span>
-      </div>
-      <div style={{ color: "rgba(250,247,242,0.6)" }}>fetching 4 sources...</div>
-      <div>
-        <span style={{ color: "var(--petrol)" }}>OK</span>{" "}
-        <span style={{ color: "rgba(250,247,242,0.8)" }}>4/4 retrieved</span>
-      </div>
-      <div style={{ color: "rgba(250,247,242,0.5)" }}>
-        <span style={{ color: "var(--coral)" }}>claude</span> synthesizing...
-        <span
-          className="inline-block w-2 h-3 ml-1 align-text-bottom"
-          style={{ background: "var(--coral)" }}
-        />
-      </div>
-    </div>
-  );
-}
-
 function MockBriefCard() {
   return (
     <div
-      className="relative"
       style={{
+        position: "relative",
         background: "#fff",
         border: "1px solid rgba(24,20,16,0.08)",
         borderRadius: "var(--rl)",
@@ -426,31 +356,49 @@ function MockBriefCard() {
       }}
     >
       <div
-        className="absolute left-0 top-0 bottom-0 w-1"
-        style={{ background: "var(--coral)", borderTopLeftRadius: "var(--rl)", borderBottomLeftRadius: "var(--rl)" }}
+        style={{
+          position: "absolute",
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: "4px",
+          background: "var(--coral)",
+          borderTopLeftRadius: "var(--rl)",
+          borderBottomLeftRadius: "var(--rl)",
+        }}
       />
-      <div className="flex items-center justify-between">
-        <span className="mono-label" style={{ color: "var(--coral)" }}>
-          10:30 · Howden Group
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <span
+          style={{
+            fontFamily: "var(--mono)",
+            fontSize: "0.7rem",
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
+            color: "var(--coral)",
+          }}
+        >
+          10:30 &middot; Industriehersteller
         </span>
         <span
-          className="font-mono text-[0.65rem] tracking-wider uppercase"
-          style={{ color: "var(--soft)" }}
+          style={{
+            fontFamily: "var(--mono)",
+            fontSize: "0.66rem",
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            color: "var(--soft)",
+          }}
         >
           DACH-Service
         </span>
       </div>
       <h3 className="h3 mt-3">Wo stehen wir?</h3>
-      <p className="mt-3 text-[0.95rem] leading-relaxed" style={{ color: "var(--ink)" }}>
-        Erstgespraech mit Marcus K., Head of Aftermarket. Bereich wurde 2024 in eigene
+      <p className="mt-3" style={{ color: "var(--ink)", fontSize: "0.95rem", lineHeight: 1.6 }}>
+        Erstgespraech mit dem Leiter Aftermarket. Bereich wurde 2024 in eigene
         GmbH ueberfuehrt, suchen jetzt einen Service-Daten-Layer.
       </p>
-      <div
-        className="mt-5 pt-5 border-t"
-        style={{ borderColor: "rgba(24,20,16,0.08)" }}
-      >
+      <div className="mt-5 pt-5" style={{ borderTop: "1px solid rgba(24,20,16,0.08)" }}>
         <p className="mono-label">Talking Points</p>
-        <ul className="mt-3 space-y-2 text-[0.92rem] leading-relaxed">
+        <ul className="mt-3 space-y-2" style={{ fontSize: "0.92rem", lineHeight: 1.55 }}>
           <li className="flex gap-2">
             <span
               className="mt-2 block h-1.5 w-1.5 rounded-full flex-none"
@@ -463,7 +411,7 @@ function MockBriefCard() {
               className="mt-2 block h-1.5 w-1.5 rounded-full flex-none"
               style={{ background: "var(--coral)" }}
             />
-            <span>Wie liefert Howden heute Wartungspakete an Kunden?</span>
+            <span>Wie liefert ihr heute Wartungspakete an Kunden?</span>
           </li>
           <li className="flex gap-2">
             <span

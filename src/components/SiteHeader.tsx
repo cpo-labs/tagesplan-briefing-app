@@ -1,53 +1,46 @@
 import Link from "next/link";
 
 interface Props {
-  dark?: boolean;
+  /**
+   * `dark`: weisser Logo-Text, transparenter Hintergrund (auf pagehero
+   *   gelegt, damit die Sand-Atmosphaere durchscheint).
+   * `cream`: dunkler Text auf hellem Boden — fuer Cream-Sections wie das
+   *   Dashboard, das ohne Pagehero auskommt.
+   */
+  tone?: "dark" | "cream";
   cta?: { href: string; label: string };
 }
 
-export function SiteHeader({ dark = false, cta }: Props) {
-  const linkClass = dark
-    ? "text-cream/70 hover:text-coral transition"
-    : "text-ink/65 hover:text-coral transition";
-  const sepClass = dark ? "text-cream/35" : "text-ink/30";
-
+export function SiteHeader({ tone = "dark", cta }: Props) {
   return (
-    <header
-      className="flex items-center justify-between"
-      style={{
-        padding: "1.5rem var(--gut)",
-        color: dark ? "var(--cream)" : "var(--ink)",
-      }}
+    <div
+      role="banner"
+      className={tone === "cream" ? "lnav lnav--cream" : "lnav"}
     >
-      <Link href="/" className="flex items-center gap-2 font-bold tracking-tight">
-        <span className="text-[1.05rem]">AppSales</span>
-        <span className={`text-[1.2rem] font-light ${sepClass}`}>/</span>
-        <span className="text-coral text-[1.05rem]">Labs</span>
-        <span className={`text-[1.2rem] font-light ${sepClass}`}>/</span>
-        <span className="text-[1.05rem]">Tagesplan</span>
+      <Link href="/" className="lnav__brand" aria-label="AppSales Labs · Tagesplan-Briefing">
+        <b>AppSales</b>
+        <span className="lnav__sep">/</span>
+        <span className="lnav__labs">Labs</span>
+        <span className="lnav__sep">/</span>
+        <span className="lnav__tool">Tagesplan</span>
       </Link>
-      <nav className="flex items-center gap-6">
-        <Link
-          href="https://labs.appsales-consulting.de"
-          className={`font-mono text-[0.72rem] tracking-[0.06em] uppercase ${linkClass}`}
-        >
+
+      <nav className="lnav__links">
+        <Link href="https://labs.appsales-consulting.de" className="lnav__hide-sm">
           Labs
         </Link>
-        <Link
-          href="/about"
-          className={`font-mono text-[0.72rem] tracking-[0.06em] uppercase ${linkClass}`}
-        >
+        <Link href="/about" className="lnav__hide-sm">
           So funktioniert&apos;s
         </Link>
         {cta && (
           <Link
             href={cta.href}
-            className={dark ? "pill pill--ghost-dark pill--arrow" : "pill pill--ink pill--arrow"}
+            className={tone === "cream" ? "pill pill--ink pill--arrow" : "pill pill--coral pill--arrow"}
           >
             {cta.label}
           </Link>
         )}
       </nav>
-    </header>
+    </div>
   );
 }

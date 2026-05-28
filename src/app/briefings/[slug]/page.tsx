@@ -25,7 +25,6 @@ export default async function BriefingDetailPage({ params }: Props) {
   const briefing = rows[0];
   if (!briefing) notFound();
 
-  // Processing → render polling shell
   if (briefing.status === "processing") {
     return <ProcessingView title={briefing.title} />;
   }
@@ -38,8 +37,6 @@ export default async function BriefingDetailPage({ params }: Props) {
     return <FailedView title={briefing.title} message="Payload fehlt." />;
   }
 
-  // Defensive parse: ein beschaedigter / migrierter Payload soll keine
-  // Server-Render-Exception ausloesen — wir zeigen einen Fallback.
   let payload: BriefingPayload;
   try {
     payload = briefingPayloadSchema.parse(JSON.parse(briefing.payload));
@@ -62,30 +59,49 @@ export default async function BriefingDetailPage({ params }: Props) {
 function ProcessingView({ title }: { title: string }) {
   return (
     <>
-      <section
-        className="grain min-h-svh flex flex-col"
-        style={{ background: "var(--cream)", color: "var(--ink)" }}
-      >
+      <header className="pagehero accent--sand">
+        <span className="pagehero__blob" aria-hidden />
         <SiteHeader />
         <BriefingAutoRefresh />
-        <div className="flex-1 flex items-center justify-center gut" style={{ padding: "5rem 0" }}>
-          <div className="max-w-[36rem] text-center">
-            <p className="eyebrow justify-center">In Arbeit</p>
-            <h1 className="display mt-6 text-[clamp(2rem,4vw,3.6rem)]">
-              {title}
-            </h1>
-            <p className="lead mt-5 mx-auto">
-              Wir holen Recherche pro Termin und lassen Claude Sonnet 4.6 synthetisieren.
-              Das dauert etwa 15-30 Sekunden pro Termin.
-            </p>
-            <div className="mt-9 inline-flex items-center gap-3 px-5 py-3 rounded-full font-mono text-[0.8rem] uppercase tracking-[0.1em]" style={{ background: "rgba(230,80,66,0.12)", color: "var(--coral-deep)" }}>
-              <span className="dot-pulse" />
-              Seite aktualisiert sich automatisch
-            </div>
+        <div className="pagehero__in">
+          <p className="pagehero__tag">In Arbeit</p>
+          <h1 className="pagehero__title">{title}</h1>
+          <p className="pagehero__sub">
+            Wir holen Recherche pro Termin und lassen Claude Sonnet 4.6
+            synthetisieren. Das dauert etwa 15-30 Sekunden pro Termin.
+          </p>
+          <div
+            style={{
+              marginTop: "1.6rem",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.7rem",
+              padding: "0.6rem 1.1rem",
+              borderRadius: "100px",
+              background: "rgba(230,80,66,0.18)",
+              color: "var(--cream)",
+              fontFamily: "var(--mono)",
+              fontSize: "0.74rem",
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              border: "1.5px solid rgba(230,80,66,0.36)",
+            }}
+          >
+            <span className="dot-pulse" />
+            Aktualisiert sich automatisch
           </div>
         </div>
-        <SiteFooter />
+      </header>
+      <section className="toolpage">
+        <div className="toolpage__in">
+          <p style={{ color: "var(--soft)", maxWidth: "44rem" }}>
+            Sobald wir fertig sind, springt die Seite automatisch in den
+            Briefing-Modus. Du kannst auch jederzeit den Tab schliessen — der
+            Link bleibt in deinem Dashboard.
+          </p>
+        </div>
       </section>
+      <SiteFooter />
     </>
   );
 }
@@ -93,22 +109,36 @@ function ProcessingView({ title }: { title: string }) {
 function FailedView({ title, message }: { title: string; message: string | null }) {
   return (
     <>
-      <section
-        className="grain min-h-svh flex flex-col"
-        style={{ background: "var(--cream)", color: "var(--ink)" }}
-      >
+      <header className="pagehero accent--coral">
+        <span className="pagehero__blob" aria-hidden />
         <SiteHeader />
-        <div className="flex-1 flex items-center justify-center gut" style={{ padding: "5rem 0" }}>
-          <div className="surface p-9 max-w-[40rem]">
-            <p className="eyebrow" style={{ color: "var(--coral-deep)" }}>
-              Etwas ist schiefgegangen
+        <div className="pagehero__in">
+          <p className="pagehero__tag">Etwas ist schiefgegangen</p>
+          <h1 className="pagehero__title">{title}</h1>
+        </div>
+      </header>
+
+      <section className="toolpage">
+        <div className="toolpage__in">
+          <div
+            style={{
+              maxWidth: "48rem",
+              padding: "clamp(1.8rem,3vw,2.4rem)",
+              background: "#fff",
+              border: "1px solid rgba(24,20,16,0.1)",
+              borderRadius: "var(--rl)",
+              boxShadow: "0 18px 40px -28px rgba(24,20,16,0.2)",
+            }}
+          >
+            <p className="mono-label" style={{ color: "var(--coral-deep)" }}>
+              Fehlermeldung
             </p>
-            <h1 className="h3 mt-3">{title}</h1>
-            <p className="mt-4 leading-relaxed" style={{ color: "var(--soft)" }}>
-              {message ?? "Wir konnten das Briefing nicht erzeugen. Versuche es nochmal, oder schreib Christian."}
+            <p className="mt-3" style={{ color: "var(--ink)", lineHeight: 1.6 }}>
+              {message ??
+                "Wir konnten das Briefing nicht erzeugen. Versuche es nochmal, oder schreib Christian."}
             </p>
-            <div className="mt-6 flex gap-3">
-              <Link href="/dashboard" className="pill pill--ink">
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link href="/dashboard" className="pill pill--ink pill--arrow">
                 Zurueck zum Dashboard
               </Link>
               <Link href={`mailto:${CONTACT_EMAIL}`} className="pill pill--ghost">
@@ -117,14 +147,14 @@ function FailedView({ title, message }: { title: string; message: string | null 
             </div>
           </div>
         </div>
-        <SiteFooter />
       </section>
+      <SiteFooter />
     </>
   );
 }
 
 function ReadyView({
-  title,
+  title: _title,
   payload,
   createdAt,
 }: {
@@ -137,27 +167,35 @@ function ReadyView({
 
   return (
     <>
-      <section
-        className="grain"
-        style={{ background: "var(--cream)", color: "var(--ink)" }}
-      >
+      <header className="pagehero accent--sand">
+        <span className="pagehero__blob" aria-hidden />
         <SiteHeader cta={{ href: "/dashboard", label: "Neues Briefing" }} />
 
-        <header className="gut" style={{ padding: "4rem 0 2.5rem", maxWidth: "78rem", margin: "0 auto" }}>
-          <p className="eyebrow">Tagesbriefing</p>
-          <h1 className="display mt-6 text-[clamp(2.6rem,5.4vw,4.8rem)] leading-[0.95]">
-            <span style={{ color: "var(--coral)" }}>{dateLabel.weekday}</span>
+        <div className="pagehero__in">
+          <p className="pagehero__tag">Tagesbriefing</p>
+          <h1 className="pagehero__title">
+            <em>{dateLabel.weekday}</em>
             <br />
             {dateLabel.dayMonth}
           </h1>
-          <p className="lead mt-5">
+          <p className="pagehero__sub">
             {payload.meetings.length === 1
               ? "Ein Termin am Tag — und alles, was du dazu wissen solltest."
-              : `${payload.meetings.length} Termine am Tag, jeder mit eigener Karte. Scrollen, oben durchklicken, oder Permalink teilen.`}
+              : `${payload.meetings.length} Termine am Tag, jeder mit eigener Karte. Scrollen, oben durchklicken oder Permalink teilen.`}
           </p>
           <div
-            className="mt-6 inline-flex items-center gap-3 font-mono text-[0.72rem] uppercase tracking-[0.1em]"
-            style={{ color: "var(--soft)" }}
+            style={{
+              marginTop: "1.4rem",
+              fontFamily: "var(--mono)",
+              fontSize: "0.72rem",
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              color: "rgba(250,247,242,0.62)",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.7rem",
+              flexWrap: "wrap",
+            }}
           >
             <span>Erstellt {generated}</span>
             {payload.isMock && (
@@ -167,34 +205,38 @@ function ReadyView({
               </>
             )}
           </div>
-        </header>
+        </div>
+      </header>
 
-        {payload.meetings.length > 1 && (
-          <nav
-            className="gut"
-            style={{ padding: "0 0 2rem", maxWidth: "78rem", margin: "0 auto" }}
-          >
-            <ul className="flex flex-wrap gap-2">
-              {payload.meetings.map((m, i) => (
-                <li key={m.uid}>
-                  <a
-                    href={`#m-${i}`}
-                    className="font-mono text-[0.7rem] uppercase tracking-[0.06em] px-3.5 py-2 rounded-full transition hover:bg-ink hover:text-cream"
-                    style={{
-                      border: "1.5px solid rgba(24,20,16,0.18)",
-                      color: "var(--ink)",
-                    }}
-                  >
-                    {formatTime(m.startsAt)} · {truncateSummary(m.summary)}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        )}
+      <section className="toolpage">
+        <div className="toolpage__in">
+          {payload.meetings.length > 1 && (
+            <nav style={{ marginBottom: "clamp(2rem,3.5vw,3rem)" }}>
+              <p className="mono-label">Sprung zu Termin</p>
+              <ul
+                className="mt-3"
+                style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}
+              >
+                {payload.meetings.map((m, i) => (
+                  <li key={m.uid}>
+                    <a
+                      href={`#m-${i}`}
+                      className="font-mono text-[0.72rem] uppercase tracking-[0.06em] px-3.5 py-2 rounded-full transition"
+                      style={{
+                        border: "1.5px solid rgba(24,20,16,0.18)",
+                        color: "var(--ink)",
+                        background: "#fff",
+                      }}
+                    >
+                      {formatTime(m.startsAt)} &middot; {truncateSummary(m.summary)}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          )}
 
-        <div className="gut" style={{ padding: "0 0 5rem", maxWidth: "78rem", margin: "0 auto" }}>
-          <div className="space-y-12">
+          <div style={{ display: "flex", flexDirection: "column", gap: "clamp(2rem,3vw,3rem)" }}>
             {payload.meetings.map((m, i) => (
               <MeetingBriefCard key={m.uid} meeting={m} index={i} />
             ))}
@@ -202,31 +244,57 @@ function ReadyView({
 
           {/* Lead CTA */}
           <div
-            className="mt-16 p-8 md:p-10 grid gap-6 md:grid-cols-[1.6fr_1fr] items-center"
+            className="grid items-center gap-6 md:grid-cols-[1.6fr_1fr]"
             style={{
+              marginTop: "clamp(3rem,5vw,5rem)",
+              padding: "clamp(2rem,3.5vw,2.8rem)",
               background: "var(--ink)",
               color: "var(--cream)",
               borderRadius: "var(--rl)",
             }}
           >
             <div>
-              <p className="eyebrow" style={{ color: "var(--coral)" }}>
+              <p
+                style={{
+                  fontFamily: "var(--mono)",
+                  fontSize: "0.76rem",
+                  letterSpacing: "0.16em",
+                  textTransform: "uppercase",
+                  color: "var(--sand)",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.6rem",
+                }}
+              >
+                <span style={{ width: "1.6rem", height: "2px", background: "var(--sand)" }} />
                 Hilft das?
               </p>
-              <h2 className="h2 mt-4 text-[clamp(1.6rem,3vw,2.4rem)]">
+              <h2
+                style={{
+                  marginTop: "1rem",
+                  fontWeight: 600,
+                  fontSize: "clamp(1.6rem,3vw,2.4rem)",
+                  letterSpacing: "-0.025em",
+                  lineHeight: 1.08,
+                }}
+              >
                 Wenn ja: schreib mir.
               </h2>
-              <p className="mt-3 text-cream/80 leading-relaxed">
-                Wir koennen dein Limit hochsetzen, das Tool an dein Setup anpassen,
-                oder ueberlegen ob daraus eine richtige Loesung wird. Lab-Tools
-                sind ein Lead-Magnet, kein SaaS.
+              <p
+                style={{
+                  marginTop: "0.9rem",
+                  color: "rgba(250,247,242,0.78)",
+                  lineHeight: 1.6,
+                  maxWidth: "44ch",
+                }}
+              >
+                Wir koennen dein Limit hochsetzen, das Tool an dein Setup
+                anpassen, oder ueberlegen, ob daraus eine richtige Loesung
+                wird. Lab-Tools sind ein Lead-Magnet, kein SaaS.
               </p>
             </div>
-            <div className="flex flex-col gap-3">
-              <Link
-                href={CONTACT_MAILTO_TAGESPLAN}
-                className="pill pill--coral pill--arrow"
-              >
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.7rem" }}>
+              <Link href={CONTACT_MAILTO_TAGESPLAN} className="pill pill--coral pill--arrow">
                 {CONTACT_EMAIL}
               </Link>
               <Link
@@ -238,9 +306,9 @@ function ReadyView({
             </div>
           </div>
         </div>
-
-        <SiteFooter />
       </section>
+
+      <SiteFooter />
     </>
   );
 }
@@ -259,8 +327,6 @@ function MeetingBriefCard({ meeting, index }: { meeting: BriefingMeeting; index:
       id={`m-${index}`}
       className={`brief-card brief-card--accent-${accent}`}
       style={{
-        // override left bar color via inline style for sage/petrol/sand variants
-        // (CSS classes cover the rest)
         ["--accent" as string]: accentVar,
       }}
     >
@@ -272,12 +338,18 @@ function MeetingBriefCard({ meeting, index }: { meeting: BriefingMeeting; index:
           {time}
         </span>
         {meeting.location && (
-          <span className="font-mono text-[0.72rem] tracking-wider uppercase" style={{ color: "var(--soft)" }}>
+          <span
+            className="font-mono text-[0.72rem] tracking-wider uppercase"
+            style={{ color: "var(--soft)" }}
+          >
             {meeting.location}
           </span>
         )}
         {meeting.hints.companyGuess && (
-          <span className="font-mono text-[0.72rem] tracking-wider uppercase" style={{ color: "var(--soft)" }}>
+          <span
+            className="font-mono text-[0.72rem] tracking-wider uppercase"
+            style={{ color: "var(--soft)" }}
+          >
             {meeting.hints.companyGuess}
           </span>
         )}
