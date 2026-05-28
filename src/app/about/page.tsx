@@ -74,7 +74,7 @@ export default function AboutPage() {
               Das Tool ist ein Lead-Magnet, kein SaaS. Wir sponsern die
               API-Kosten, damit du es ausprobieren kannst. Wenn du es danach
               oefter brauchst, schreib uns &mdash; wir heben das Limit, oder wir
-              ueberlegen gemeinsam, ob daraus etwas richtiges wird.
+              ueberlegen gemeinsam, ob daraus etwas Richtiges wird.
             </p>
             <Link href={CONTACT_MAILTO_TAGESPLAN} className="pill pill--ink pill--arrow mt-6">
               Schreib uns

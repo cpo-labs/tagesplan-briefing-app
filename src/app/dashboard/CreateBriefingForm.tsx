@@ -337,8 +337,8 @@ function GoogleTab() {
         style={{ marginTop: "1rem", maxWidth: "44rem" }}
       >
         <b>OAuth-Setup ausstehend:</b> Die Google-Client-ID + Secret muessen
-        noch in der Vercel-Umgebung hinterlegt werden. Schreib uns, ich
-        rolle das auf dein Konto frei (max. 24h).
+        noch in der Vercel-Umgebung hinterlegt werden. Schreib uns &mdash; wir
+        rollen das auf dein Konto frei (max. 24h).
       </div>
 
       <div style={{ marginTop: "1.4rem", display: "flex", flexWrap: "wrap", gap: "0.7rem" }}>
