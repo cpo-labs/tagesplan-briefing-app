@@ -1,0 +1,264 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Design Tokens (mirroring labs.appsales-consulting.de) ─────────── */
+:root {
+  --cream: #FAF7F2;
+  --cream-2: #EFE8DC;
+  --ink: #181410;
+  --ink-deep: #0D0B09;
+  --coral: #E65042;
+  --coral-deep: #C13B2E;
+  --petrol: #1F6E68;
+  --sand: #DDA13B;
+  --sage: #84996B;
+  --soft: #5C544B;
+
+  --font: "Montserrat", -apple-system, system-ui, sans-serif;
+  --mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
+  --gut: clamp(1.4rem, 5vw, 6.5rem);
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --rl: 34px;
+  --rm: 22px;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--cream);
+  color: var(--ink);
+  font-family: var(--font);
+  font-weight: 400;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--coral);
+  color: var(--cream);
+}
+
+/* ─── Buttons / pills ───────────────────────────────────────────────── */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-family: var(--font);
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 0.9rem 1.7rem;
+  border-radius: 100px;
+  border: 1.6px solid transparent;
+  transition: transform 0.25s var(--ease), background 0.25s var(--ease),
+    color 0.25s var(--ease), border-color 0.25s var(--ease);
+  text-decoration: none;
+}
+.pill--ink { background: var(--ink); color: var(--cream); }
+.pill--ink:hover:not(:disabled) { transform: translateY(-3px); background: var(--coral); }
+.pill--coral { background: var(--coral); color: var(--cream); }
+.pill--coral:hover:not(:disabled) { transform: translateY(-3px); background: var(--coral-deep); }
+.pill--ghost { border-color: rgba(24, 20, 16, 0.32); color: var(--ink); background: transparent; }
+.pill--ghost:hover:not(:disabled) { background: var(--ink); color: var(--cream); transform: translateY(-3px); }
+.pill--ghost-dark { border-color: rgba(250, 247, 242, 0.4); color: var(--cream); background: transparent; }
+.pill--ghost-dark:hover:not(:disabled) { background: var(--cream); color: var(--ink); }
+.pill[disabled] { opacity: 0.5; cursor: not-allowed; }
+.pill--arrow::after { content: "\2192"; transition: transform 0.2s var(--ease); }
+.pill:hover.pill--arrow::after { transform: translateX(4px); }
+
+/* ─── Editorial typography helpers ──────────────────────────────────── */
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--coral);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.eyebrow::before {
+  content: "";
+  width: 1.6rem;
+  height: 2px;
+  background: var(--coral);
+}
+
+.display {
+  font-weight: 700;
+  font-size: clamp(2.7rem, 7vw, 6.4rem);
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+.display em {
+  font-style: normal;
+  color: var(--coral);
+}
+
+.h2 {
+  font-weight: 700;
+  font-size: clamp(1.9rem, 4vw, 3.2rem);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+
+.h3 {
+  font-weight: 600;
+  font-size: clamp(1.3rem, 2vw, 1.7rem);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.lead {
+  font-size: clamp(1.05rem, 1.4vw, 1.25rem);
+  color: var(--soft);
+  line-height: 1.6;
+  max-width: 56ch;
+}
+
+.mono-label {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--soft);
+}
+
+/* ─── Layout helpers ────────────────────────────────────────────────── */
+.gut {
+  padding-left: var(--gut);
+  padding-right: var(--gut);
+}
+
+/* ─── Surface cards ─────────────────────────────────────────────────── */
+.surface {
+  background: #fff;
+  border-radius: var(--rm);
+  border: 1px solid rgba(24, 20, 16, 0.08);
+  box-shadow: 0 18px 40px -28px rgba(24, 20, 16, 0.2);
+}
+.surface--ink {
+  background: var(--ink);
+  color: var(--cream);
+  border-color: rgba(250, 247, 242, 0.12);
+}
+.surface--dim {
+  background: var(--cream-2);
+  border-color: rgba(24, 20, 16, 0.06);
+  box-shadow: none;
+}
+
+/* ─── Brand grain backdrop ──────────────────────────────────────────── */
+.grain {
+  position: relative;
+  isolation: isolate;
+}
+.grain::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: linear-gradient(rgba(24, 20, 16, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(24, 20, 16, 0.045) 1px, transparent 1px);
+  background-size: 56px 56px;
+  -webkit-mask-image: radial-gradient(140% 120% at 50% 40%, #000 22%, transparent 78%);
+          mask-image: radial-gradient(140% 120% at 50% 40%, #000 22%, transparent 78%);
+}
+.grain--dark::before {
+  background-image: linear-gradient(rgba(250, 247, 242, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(250, 247, 242, 0.04) 1px, transparent 1px);
+}
+
+/* ─── Inputs ────────────────────────────────────────────────────────── */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.field__label {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--soft);
+}
+.field__input,
+.field__textarea,
+.field__select {
+  font-family: var(--font);
+  font-size: 1rem;
+  padding: 0.95rem 1.1rem;
+  border-radius: 14px;
+  border: 1.5px solid rgba(24, 20, 16, 0.16);
+  background: #fff;
+  color: var(--ink);
+  transition: border-color 0.18s var(--ease), box-shadow 0.18s var(--ease);
+}
+.field__input:focus,
+.field__textarea:focus,
+.field__select:focus {
+  outline: none;
+  border-color: var(--coral);
+  box-shadow: 0 0 0 4px rgba(230, 80, 66, 0.16);
+}
+.field__hint {
+  font-size: 0.82rem;
+  color: var(--soft);
+  line-height: 1.5;
+}
+.field__error {
+  font-size: 0.82rem;
+  color: var(--coral-deep);
+  line-height: 1.4;
+}
+
+/* ─── Brief card (result page) ──────────────────────────────────────── */
+.brief-card {
+  position: relative;
+  background: #fff;
+  border-radius: var(--rl);
+  border: 1px solid rgba(24, 20, 16, 0.08);
+  padding: clamp(1.6rem, 3vw, 2.6rem);
+  overflow: hidden;
+}
+.brief-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--coral);
+}
+.brief-card--accent-petrol::before { background: var(--petrol); }
+.brief-card--accent-sand::before { background: var(--sand); }
+.brief-card--accent-sage::before { background: var(--sage); }
+
+/* ─── Animations ────────────────────────────────────────────────────── */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+.dot-pulse {
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 100px;
+  background: var(--coral);
+  animation: pulse-dot 1.4s ease-in-out infinite;
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: none; }
+}
+.fade-up {
+  animation: fade-up 0.7s var(--ease) both;
+}
+.fade-up--delay-1 { animation-delay: 0.1s; }
+.fade-up--delay-2 { animation-delay: 0.2s; }
+.fade-up--delay-3 { animation-delay: 0.3s; }
