@@ -10,6 +10,15 @@
  * falls into any forbidden range. `redirect: "error"` blocks the fetch
  * layer from silently following a 30x into a different (potentially
  * internal) host without us re-validating.
+ *
+ * Known limitation — DNS rebinding (TOCTOU): an attacker who controls the
+ * authoritative DNS can return a public IP for our lookup() and a private
+ * IP for the actual fetch() that follows ~milliseconds later. Mitigating
+ * this requires socket-level address pinning (custom dispatcher with
+ * connect-time IP-check). Acceptable here because there are no sensitive
+ * loopback services and the blast radius on Vercel-style isolation is
+ * limited. Re-evaluate if this tool ever runs in an environment with
+ * internal HTTP services on private IPs reachable from the worker.
  */
 
 import dns, { type LookupAddress } from "node:dns";
