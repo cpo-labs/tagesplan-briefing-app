@@ -84,7 +84,7 @@ export async function createBriefing(
   if (emailUses >= env.limitPerEmail) {
     return {
       ok: false,
-      error: `Du hast dein Limit von ${env.limitPerEmail} Briefings erreicht. Schreib Christian, wenn du mehr willst.`,
+      error: `Du hast dein Limit von ${env.limitPerEmail} Briefings erreicht. Schreib uns, wenn du mehr willst.`,
       code: "rate_limit_email",
     };
   }
@@ -93,7 +93,7 @@ export async function createBriefing(
   if (!dailyOk) {
     return {
       ok: false,
-      error: "Tageslimit erreicht. Probiere es morgen wieder, oder schreib Christian.",
+      error: "Tageslimit erreicht. Probiere es morgen wieder, oder schreib uns.",
       code: "rate_limit_global",
     };
   }

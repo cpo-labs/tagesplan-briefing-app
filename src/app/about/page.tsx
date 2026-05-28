@@ -71,13 +71,13 @@ export default function AboutPage() {
             <p className="eyebrow">Limits</p>
             <h2 className="h3 mt-3">3 Briefings pro Mail-Adresse. Das ist Absicht.</h2>
             <p className="mt-4 leading-relaxed" style={{ color: "var(--soft)" }}>
-              Das Tool ist ein Lead-Magnet, kein SaaS. Christian sponsort die
+              Das Tool ist ein Lead-Magnet, kein SaaS. Wir sponsern die
               API-Kosten, damit du es ausprobieren kannst. Wenn du es danach
-              oefter brauchst, schreib ihm — er hebt das Limit hoch, oder ihr
-              ueberlegt, ob daraus etwas richtiges wird.
+              oefter brauchst, schreib uns &mdash; wir heben das Limit, oder wir
+              ueberlegen gemeinsam, ob daraus etwas richtiges wird.
             </p>
             <Link href={CONTACT_MAILTO_TAGESPLAN} className="pill pill--ink pill--arrow mt-6">
-              Christian schreiben
+              Schreib uns
             </Link>
           </div>
 
@@ -88,7 +88,7 @@ export default function AboutPage() {
               style={{ color: "var(--soft)", fontSize: "0.95rem", lineHeight: 1.6 }}
             >
               <li>Deine Mail-Adresse: fuer Login und Rate-Limit, nicht fuer Newsletter.</li>
-              <li>Dein iCal-Link: im Briefing-Datensatz hinterlegt. Du kannst loeschen lassen (Mail an Christian).</li>
+              <li>Dein iCal-Link: im Briefing-Datensatz hinterlegt. Du kannst loeschen lassen (Mail an uns).</li>
               <li>Recherche-Snippets: nicht persistiert. Nur das gerenderte Briefing bleibt.</li>
               <li>Kein Tracking, kein Analytics-Pixel.</li>
             </ul>

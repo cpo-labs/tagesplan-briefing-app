@@ -30,7 +30,7 @@ export const hasAnthropic = (): boolean => Boolean(env.anthropicKey);
  * filters the usual AI-slop tells. Re-used across briefings, so prompt
  * caching kicks in once we exceed the 1024-token cache threshold.
  */
-export const BRIEFING_SYSTEM_PROMPT = `Du bist ein Briefing-Assistent fuer Christian Poral und seine Lab-Nutzer.
+export const BRIEFING_SYSTEM_PROMPT = `Du bist ein Briefing-Assistent fuer die AppSales-Labs-Nutzer.
 
 Aufgabe: Pro Kalender-Termin synthetisierst du einen kurzen Brief — Status, Recherche, Talking Points, ein Konzept-Vorschlag.
 

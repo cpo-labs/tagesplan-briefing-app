@@ -337,7 +337,7 @@ function GoogleTab() {
         style={{ marginTop: "1rem", maxWidth: "44rem" }}
       >
         <b>OAuth-Setup ausstehend:</b> Die Google-Client-ID + Secret muessen
-        noch in der Vercel-Umgebung hinterlegt werden. Schreib mir, ich
+        noch in der Vercel-Umgebung hinterlegt werden. Schreib uns, ich
         rolle das auf dein Konto frei (max. 24h).
       </div>
 
@@ -355,7 +355,7 @@ function GoogleTab() {
           href={`mailto:${CONTACT_EMAIL}?subject=Tagesplan-Briefing%20%C2%B7%20Google-OAuth%20freischalten`}
           className="pill pill--ghost"
         >
-          Christian schreiben
+          Schreib uns
         </Link>
       </div>
     </div>

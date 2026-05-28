@@ -126,14 +126,14 @@ function RateLimitedCard() {
       <p className="eyebrow">Limit erreicht</p>
       <h2 className="h3 mt-4">Du hast deine drei Briefings verbraucht.</h2>
       <p className="mt-4 leading-relaxed" style={{ color: "var(--soft)" }}>
-        Wenn du das Tool oefter brauchst, schreib mir kurz. Wir koennen entweder dein
+        Wenn du das Tool oefter brauchst, schreib uns kurz. Wir koennen entweder dein
         Limit hochsetzen oder ueberlegen, ob daraus eine richtige Loesung wird.
       </p>
       <a
         href={`mailto:${CONTACT_EMAIL}?subject=Tagesplan-Briefing%20%C2%B7%20mehr%20Briefings`}
         className="pill pill--coral pill--arrow mt-7"
       >
-        Christian schreiben
+        Schreib uns
       </a>
     </div>
   );

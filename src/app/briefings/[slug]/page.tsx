@@ -135,14 +135,14 @@ function FailedView({ title, message }: { title: string; message: string | null 
             </p>
             <p className="mt-3" style={{ color: "var(--ink)", lineHeight: 1.6 }}>
               {message ??
-                "Wir konnten das Briefing nicht erzeugen. Versuche es nochmal, oder schreib Christian."}
+                "Wir konnten das Briefing nicht erzeugen. Versuche es nochmal, oder schreib uns."}
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link href="/dashboard" className="pill pill--ink pill--arrow">
                 Zurueck zum Dashboard
               </Link>
               <Link href={`mailto:${CONTACT_EMAIL}`} className="pill pill--ghost">
-                Christian schreiben
+                Schreib uns
               </Link>
             </div>
           </div>
@@ -278,7 +278,7 @@ function ReadyView({
                   lineHeight: 1.08,
                 }}
               >
-                Wenn ja: schreib mir.
+                Wenn ja: schreib uns.
               </h2>
               <p
                 style={{

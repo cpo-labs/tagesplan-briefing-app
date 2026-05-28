@@ -272,7 +272,7 @@ export default function LandingPage() {
                 Briefing erzeugen
               </Link>
               <Link href={`mailto:${CONTACT_EMAIL}`} className="pill pill--ghost-dark">
-                Christian schreiben
+                Schreib uns
               </Link>
             </div>
           </div>
