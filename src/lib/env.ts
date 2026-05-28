@@ -42,11 +42,21 @@ const handler: ProxyHandler<{}> = {
         return optional("ANTHROPIC_API_KEY");
       case "anthropicModel":
         return process.env.ANTHROPIC_MODEL ?? "claude-sonnet-4-6";
-      case "betterAuthSecret":
-        return (
-          process.env.BETTER_AUTH_SECRET ||
-          "dev-only-do-not-use-in-prod-change-me-please-32-chars"
-        );
+      case "betterAuthSecret": {
+        const secret = process.env.BETTER_AUTH_SECRET;
+        if (secret) return secret;
+        // Production-Runtime ohne Secret = hartes Stop. `next build` setzt
+        // NODE_ENV=production fuer Routen-Analyse aber NEXT_PHASE markiert
+        // den Build — dann ist der Throw unangebracht. Im Build returnen
+        // wir den Dev-Fallback, Production-Runtime wirft.
+        const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build";
+        if (process.env.NODE_ENV === "production" && !isBuildPhase) {
+          throw new Error(
+            "BETTER_AUTH_SECRET muss in Production gesetzt sein. Generiere via `openssl rand -base64 32`.",
+          );
+        }
+        return "dev-only-do-not-use-in-prod-change-me-please-32-chars";
+      }
       case "betterAuthUrl":
         return process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
       case "resendKey":

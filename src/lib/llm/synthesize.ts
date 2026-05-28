@@ -47,12 +47,33 @@ export async function synthesiseMeeting(
   const userMessage = buildUserMessage(event, research);
 
   const client = getAnthropic();
-  const response = await client.messages.create({
-    model: env.anthropicModel,
-    max_tokens: 1500,
-    system: BRIEFING_SYSTEM_PROMPT,
-    messages: [{ role: "user", content: userMessage }],
-  });
+
+  // 60s hard cap. Ohne dieses Limit haengt die Server Action bis der Host
+  // sie killt — der User sieht endlos den processing-Spinner.
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 60_000);
+
+  let response;
+  try {
+    response = await client.messages.create(
+      {
+        model: env.anthropicModel,
+        max_tokens: 1500,
+        system: BRIEFING_SYSTEM_PROMPT,
+        messages: [{ role: "user", content: userMessage }],
+      },
+      { signal: controller.signal },
+    );
+  } catch (err) {
+    if (controller.signal.aborted) {
+      throw new Error(
+        "Die Recherche-Synthese hat zu lange gedauert. Bitte nochmal versuchen.",
+      );
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeout);
+  }
 
   const textBlock = response.content.find((b) => b.type === "text");
   if (!textBlock || textBlock.type !== "text") {
@@ -174,19 +195,24 @@ function safeParseJson(text: string): unknown {
 
 /**
  * Anti-AI-Slop-Filter: ersetzt typische Tells, wenn sie es trotzdem
- * durchgeschafft haben. Em-Dashes raus, "Es ist wichtig zu beachten"
- * weg etc.
+ * durchgeschafft haben.
+ *
+ * Em-Dash: NICHT mehr generell ersetzt. Em-Dash ist ein legitimer
+ * deutscher Gedankenstrich und das blinde Ersetzen durch Komma hat in
+ * Smoke-Tests Saetze gebrochen. Stattdessen filtern wir nur die wirklich
+ * eindeutigen Phrasen-Tells ("Lass uns eintauchen", "Es ist wichtig zu
+ * beachten", "Absolut!" etc.).
  */
 function scrubSlop(brief: MeetingBrief): MeetingBrief {
   const scrub = (s: string): string =>
     s
-      .replace(/—/g, ",")
-      .replace(/–/g, "-")
       .replace(/\bEs ist wichtig zu beachten,?\s*/gi, "")
       .replace(/\bLass uns eintauchen[.!]?\s*/gi, "")
       .replace(/\bIm Wesentlichen,?\s*/gi, "")
       .replace(/\bUnter dem Strich,?\s*/gi, "")
       .replace(/\bZusammenfassend,?\s*/gi, "")
+      .replace(/^Absolut[!.]\s*/gi, "")
+      .replace(/^Ich freue mich,?\s*/gi, "")
       .trim();
 
   return {
