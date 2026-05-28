@@ -9,35 +9,48 @@
  * once with `processing`, then with `ready` / `failed`.
  */
 
-import { eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
+import { z } from "zod";
 import { db } from "../db/client";
 import { briefingRuns, briefings, dailyCounters } from "../db/schema";
 import { env } from "../env";
 import { fetchIcal, filterEventsForDate, type CalendarEvent } from "../calendar/ical";
 import { researchEvent, type ResearchBundle } from "../research/research";
-import { synthesiseMeeting, type MeetingBrief } from "../llm/synthesize";
+import { meetingBriefSchema, synthesiseMeeting } from "../llm/synthesize";
 
-export interface BriefingPayload {
-  date: string;
-  generatedAt: string;
-  source: { kind: "ical-url"; url: string };
-  meetings: BriefingMeeting[];
+const meetingHintsSchema = z.object({
+  companyGuess: z.string().optional(),
+  personGuess: z.string().optional(),
+  domainGuess: z.string().optional(),
+  externalAttendees: z.array(z.string()).default([]),
+});
+
+export const briefingMeetingSchema = z.object({
+  uid: z.string(),
+  startsAt: z.string(),
+  endsAt: z.string(),
+  summary: z.string(),
+  location: z.string().optional(),
+  attendees: z.array(z.string()).default([]),
+  hints: meetingHintsSchema,
+  brief: meetingBriefSchema,
+  citationsExtra: z
+    .array(z.object({ label: z.string(), url: z.string() }))
+    .default([]),
+});
+
+export const briefingPayloadSchema = z.object({
+  date: z.string(),
+  generatedAt: z.string(),
+  source: z.object({ kind: z.literal("ical-url"), url: z.string() }),
+  meetings: z.array(briefingMeetingSchema),
   /** True if the run was a partial mock (no LLM or no research). */
-  isMock: boolean;
-}
+  isMock: z.boolean(),
+});
 
-export interface BriefingMeeting {
-  uid: string;
-  startsAt: string;
-  endsAt: string;
-  summary: string;
-  location?: string;
-  attendees: string[];
-  hints: ResearchBundle["hints"];
-  brief: MeetingBrief;
-  citationsExtra: Array<{ label: string; url: string }>;
-}
+export type BriefingPayload = z.infer<typeof briefingPayloadSchema>;
+export type BriefingMeeting = z.infer<typeof briefingMeetingSchema>;
 
 export interface CreateBriefingInput {
   userId: string;
@@ -248,17 +261,30 @@ function collectCitations(research: ResearchBundle): Array<{ label: string; url:
 }
 
 async function countSuccessfulRuns(email: string): Promise<number> {
+  // SELECT count(*) ... — kein full table load. Wichtig sobald die Tabelle
+  // waechst (jede Mail-Adresse triggert diesen Check pro Briefing).
   const rows = await db
-    .select()
+    .select({ count: sql<number>`count(*)` })
     .from(briefingRuns)
-    .where(eq(briefingRuns.userEmail, email.toLowerCase()));
-  return rows.filter((r) => r.succeeded).length;
+    .where(
+      and(
+        eq(briefingRuns.userEmail, email.toLowerCase()),
+        eq(briefingRuns.succeeded, true),
+      ),
+    );
+  return Number(rows[0]?.count ?? 0);
 }
 
 /**
- * Atomic increment of today's daily counter. Returns false if we'd go
- * past the cap. Implementation: read-modify-write inside a transaction —
- * good enough for our scale.
+ * Increment today's daily counter and return false when we'd exceed cap.
+ *
+ * Race-Window: dieser Pfad ist NICHT in einer Transaction. libsql/Turso
+ * unterstuetzt zwar `db.transaction()`, aber die Implementierung ist
+ * cross-driver brittle (Edge-Runtime vs. Node lokal). Konsequenz: zwei
+ * gleichzeitige Requests koennen beide den Cap-Check passieren und das
+ * Tageslimit um 1 ueberschreiten. Bei `limitGlobalDaily=50` ist der
+ * Worst-Case 51 Briefings — akzeptabel fuer ein Lab-Tool und im README
+ * dokumentiert.
  */
 async function tryIncrementDailyCounter(cap: number): Promise<boolean> {
   const today = new Date().toISOString().slice(0, 10);

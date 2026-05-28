@@ -96,9 +96,11 @@ src/
 
 Beide Limits sind in `.env.local` ueber `BRIEFING_LIMIT_PER_EMAIL` und `BRIEFING_LIMIT_GLOBAL_DAILY` konfigurierbar.
 
+> **Race-Window (akzeptiert):** Die beiden Counter sind nicht in einer DB-Transaction gewrappt. Zwei gleichzeitige Requests koennen den Cap-Check beide passieren, dadurch kann das Limit pro Mail-Adresse oder global gelegentlich um 1 ueberschritten werden. Bei einem Lab-Tool mit `limitGlobalDaily=50` ist der Worst-Case 51 Briefings — fuer den Use-Case akzeptabel. libsql/Turso `db.transaction()` waere die saubere Loesung, ist aber cross-runtime (Edge vs. Node) brittle.
+
 ## Anti-AI-Slop
 
-Der System-Prompt fuer Claude filtert die ueblichen Tells (kein "Lass uns eintauchen", keine Em-Dash-Inflation, keine Floskeln). Zusaetzlich gibt es einen Post-Processing-Filter in `scrubSlop()`, der durchgerutschte Em-Dashes nachtraeglich ersetzt.
+Der System-Prompt fuer Claude filtert die ueblichen Tells (kein "Lass uns eintauchen", keine Em-Dash-Inflation, keine Floskeln). Zusaetzlich gibt es einen Post-Processing-Filter in `scrubSlop()`, der durchgerutschte AI-Floskeln nachtraeglich entfernt. Em-Dashes selbst werden NICHT mehr automatisch ersetzt — sie sind legitime deutsche Gedankenstriche und das blinde Ersetzen hat Saetze gebrochen.
 
 ## Smoke-Test
 

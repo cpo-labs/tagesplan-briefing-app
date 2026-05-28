@@ -3,9 +3,14 @@ import Link from "next/link";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { briefings } from "@/lib/db/schema";
-import type { BriefingPayload, BriefingMeeting } from "@/lib/briefing/pipeline";
+import {
+  briefingPayloadSchema,
+  type BriefingPayload,
+  type BriefingMeeting,
+} from "@/lib/briefing/pipeline";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { CONTACT_EMAIL, CONTACT_MAILTO_TAGESPLAN } from "@/lib/constants";
 import { BriefingAutoRefresh } from "./BriefingAutoRefresh";
 
 interface Props {
@@ -29,9 +34,24 @@ export default async function BriefingDetailPage({ params }: Props) {
     return <FailedView title={briefing.title} message={briefing.errorMessage} />;
   }
 
-  const payload = briefing.payload ? (JSON.parse(briefing.payload) as BriefingPayload) : null;
-  if (!payload) {
+  if (!briefing.payload) {
     return <FailedView title={briefing.title} message="Payload fehlt." />;
+  }
+
+  // Defensive parse: ein beschaedigter / migrierter Payload soll keine
+  // Server-Render-Exception ausloesen — wir zeigen einen Fallback.
+  let payload: BriefingPayload;
+  try {
+    payload = briefingPayloadSchema.parse(JSON.parse(briefing.payload));
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error("[briefings/[slug]] payload validation failed:", err);
+    return (
+      <FailedView
+        title={briefing.title}
+        message="Briefing ist beschaedigt oder hat ein veraltetes Format. Bitte neu erzeugen."
+      />
+    );
   }
 
   return <ReadyView title={briefing.title} payload={payload} createdAt={briefing.createdAt} />;
@@ -91,7 +111,7 @@ function FailedView({ title, message }: { title: string; message: string | null 
               <Link href="/dashboard" className="pill pill--ink">
                 Zurueck zum Dashboard
               </Link>
-              <Link href="mailto:c.poral@elunic.com" className="pill pill--ghost">
+              <Link href={`mailto:${CONTACT_EMAIL}`} className="pill pill--ghost">
                 Christian schreiben
               </Link>
             </div>
@@ -204,10 +224,10 @@ function ReadyView({
             </div>
             <div className="flex flex-col gap-3">
               <Link
-                href="mailto:c.poral@elunic.com?subject=Tagesplan-Briefing"
+                href={CONTACT_MAILTO_TAGESPLAN}
                 className="pill pill--coral pill--arrow"
               >
-                c.poral@elunic.com
+                {CONTACT_EMAIL}
               </Link>
               <Link
                 href="https://labs.appsales-consulting.de"
