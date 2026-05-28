@@ -3,6 +3,8 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { getLocale } from "@/lib/i18n-server";
+import { t } from "@/lib/i18n";
 import { LoginForm } from "./LoginForm";
 
 export const dynamic = "force-dynamic";
@@ -12,6 +14,9 @@ interface Props {
 }
 
 export default async function LoginPage({ searchParams }: Props) {
+  const locale = await getLocale();
+  const dict = t(locale);
+
   const session = await auth.api.getSession({ headers: await headers() });
   const sp = await searchParams;
   const fromTab = sp.from && ["ical", "share", "google"].includes(sp.from) ? sp.from : null;
@@ -25,17 +30,16 @@ export default async function LoginPage({ searchParams }: Props) {
     <>
       <header className="pagehero accent--sand">
         <span className="pagehero__blob" aria-hidden />
-        <SiteHeader />
+        <SiteHeader locale={locale} />
 
         <div className="pagehero__in">
-          <p className="pagehero__tag">Login per Magic Link</p>
+          <p className="pagehero__tag">{dict.login.tag}</p>
           <h1 className="pagehero__title">
-            Deine <em>Mail</em>, dein Link, fertig.
+            {dict.login.titleBefore}
+            <em>{dict.login.titleEm}</em>
+            {dict.login.titleAfter}
           </h1>
-          <p className="pagehero__sub">
-            Wir schicken dir einen Login-Link. Keine Passwoerter. Der Link
-            laeuft nach 15 Minuten ab.
-          </p>
+          <p className="pagehero__sub">{dict.login.sub}</p>
         </div>
       </header>
 
@@ -51,7 +55,7 @@ export default async function LoginPage({ searchParams }: Props) {
               boxShadow: "0 18px 40px -28px rgba(24,20,16,0.2)",
             }}
           >
-            <LoginForm callback={callback} />
+            <LoginForm callback={callback} locale={locale} />
             <p
               className="mt-7"
               style={{
@@ -60,15 +64,13 @@ export default async function LoginPage({ searchParams }: Props) {
                 color: "var(--soft)",
               }}
             >
-              Mit dem Login akzeptierst du, dass wir deine Mail-Adresse
-              speichern. Wir nutzen sie ausschliesslich fuer den Login und das
-              Rate-Limit (3 Briefings pro Mail).
+              {dict.login.consent}
             </p>
           </div>
         </div>
       </section>
 
-      <SiteFooter />
+      <SiteFooter locale={locale} />
     </>
   );
 }

@@ -91,10 +91,12 @@ export const briefings = sqliteTable(
   {
     id: text("id").primaryKey(),
     slug: text("slug").notNull().unique(),
-    userId: text("user_id")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-    userEmail: text("user_email").notNull(),
+    // Nullable: der iCal-Weg ist barrierefrei und braucht keinen Login.
+    // FK + cascade bleiben — wenn ein eingeloggter User geloescht wird,
+    // raeumt das seine Briefings mit auf. Anonyme Briefings haben userId null.
+    userId: text("user_id").references(() => user.id, { onDelete: "cascade" }),
+    // Nullable: E-Mail ist optional (nur fuer Zustellung), kein Gate.
+    userEmail: text("user_email"),
     date: text("date").notNull(), // ISO date (YYYY-MM-DD)
     calendarSource: text("calendar_source").notNull(), // "ical-url" | "share" | "google-oauth"
     calendarUrl: text("calendar_url"),
@@ -125,7 +127,9 @@ export const briefingRuns = sqliteTable(
   "briefing_runs",
   {
     id: text("id").primaryKey(),
-    userEmail: text("user_email").notNull(),
+    // Nullable: anonyme iCal-Laeufe haben keine E-Mail. Der globale
+    // Tageszaehler greift trotzdem; der Per-E-Mail-Check nur bei gesetzter Mail.
+    userEmail: text("user_email"),
     briefingId: text("briefing_id").references(() => briefings.id, {
       onDelete: "set null",
     }),

@@ -364,6 +364,44 @@ body {
   .lnav__tool { display: none; }
 }
 
+/* ─── Language toggle (DE/EN) ───────────────────────────────────────── */
+.nav__lang {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1rem;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1.5px solid rgba(250, 247, 242, 0.28);
+  border-radius: 100px;
+  padding: 0.18rem;
+}
+.lnav--cream .nav__lang { border-color: rgba(24, 20, 16, 0.18); }
+.nav__lang a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.9rem;
+  padding: 0.22rem 0.5rem;
+  border-radius: 100px;
+  color: rgba(250, 247, 242, 0.66);
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s var(--ease), background 0.2s var(--ease);
+}
+.lnav--cream .nav__lang a { color: var(--soft); }
+.nav__lang a:hover { color: var(--coral); }
+.nav__lang a.is-current {
+  background: var(--coral);
+  color: var(--cream);
+}
+.lnav--cream .nav__lang a.is-current { background: var(--ink); color: var(--cream); }
+.nav__lang a:focus-visible {
+  outline: 2px solid var(--coral);
+  outline-offset: 2px;
+}
+
 /* ─── Labs footer (slim, used app-wide) ─────────────────────────────── */
 .lfooter {
   background: var(--cream-2);
@@ -470,6 +508,17 @@ body {
   line-height: 1.55;
   color: var(--soft);
   margin: 0;
+}
+.calsrc__badge {
+  align-self: flex-start;
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sand);
+  background: rgba(221, 161, 59, 0.14);
+  border-radius: 100px;
+  padding: 0.26rem 0.7rem;
 }
 .calsrc__meta {
   margin-top: auto;
@@ -652,3 +701,115 @@ body {
 .fade-up--delay-1 { animation-delay: 0.1s; }
 .fade-up--delay-2 { animation-delay: 0.2s; }
 .fade-up--delay-3 { animation-delay: 0.3s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-up { animation: none; }
+  .dot-pulse { animation: none; }
+}
+
+.brief-card--accent-coral::before { background: var(--coral); }
+
+/* ─── Calendar form (barrier-free hero entry) ───────────────────────── */
+.calform {
+  display: flex;
+  flex-direction: column;
+  gap: 1.3rem;
+  background: #fff;
+  border: 1px solid rgba(24, 20, 16, 0.1);
+  border-radius: var(--rl);
+  padding: clamp(1.6rem, 2.8vw, 2.4rem);
+  box-shadow: 0 26px 60px -34px rgba(24, 20, 16, 0.32);
+}
+.calform__heading {
+  font-weight: 600;
+  font-size: clamp(1.4rem, 2.6vw, 1.9rem);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.calform__honeypot {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+.calform__advanced-toggle {
+  align-self: flex-start;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--soft);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.2rem 0;
+  transition: color 0.18s var(--ease);
+}
+.calform__advanced-toggle:hover { color: var(--coral); }
+.calform__advanced-toggle span { color: var(--coral); font-weight: 700; }
+.calform__advanced {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  padding: 1.2rem;
+  border-radius: 14px;
+  background: var(--cream-2);
+}
+.calform__submit-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  padding-top: 0.2rem;
+}
+.calform__time-note {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--soft);
+}
+
+/* ─── Send-day-plan inline control (result page) ────────────────────── */
+.sendplan {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.sendplan__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+}
+.sendplan__input {
+  flex: 1 1 16rem;
+  min-width: 0;
+  font-family: var(--font);
+  font-size: 0.96rem;
+  padding: 0.8rem 1rem;
+  border-radius: 100px;
+  border: 1.5px solid rgba(250, 247, 242, 0.28);
+  background: rgba(250, 247, 242, 0.06);
+  color: var(--cream);
+}
+.sendplan__input::placeholder { color: rgba(250, 247, 242, 0.5); }
+.sendplan__input:focus {
+  outline: none;
+  border-color: var(--sand);
+  box-shadow: 0 0 0 4px rgba(221, 161, 59, 0.18);
+}
+.sendplan__done {
+  font-family: var(--mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--sand);
+}
+.sendplan__error {
+  font-family: var(--mono);
+  font-size: 0.74rem;
+  color: #f19e94;
+}

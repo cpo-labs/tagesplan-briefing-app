@@ -2,17 +2,23 @@ import Link from "next/link";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { CONTACT_MAILTO_TAGESPLAN } from "@/lib/constants";
+import { getLocale } from "@/lib/i18n-server";
+import { t } from "@/lib/i18n";
+
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "So funktioniert's — Tagesplan-Briefing",
 };
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const locale = await getLocale();
+  const dict = t(locale);
   return (
     <>
       <header className="pagehero accent--petrol">
         <span className="pagehero__blob" aria-hidden />
-        <SiteHeader cta={{ href: "/login", label: "Briefing erzeugen" }} />
+        <SiteHeader cta={{ href: "/#calendar-form", label: dict.bottomCta.primary }} locale={locale} />
 
         <div className="pagehero__in">
           <p className="pagehero__tag">So funktioniert&apos;s</p>
@@ -96,7 +102,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <SiteFooter />
+      <SiteFooter locale={locale} />
     </>
   );
 }

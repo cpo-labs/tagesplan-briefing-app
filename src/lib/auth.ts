@@ -14,8 +14,11 @@ const resend = env.resendKey ? new Resend(env.resendKey) : null;
  */
 async function sendMagicLink({ email, url }: { email: string; url: string }) {
   if (!resend) {
-    // eslint-disable-next-line no-console
-    console.log(`\n[magic-link] for ${email}\n  ${url}\n`);
+    // Dev-only: Magic-Link-Token + E-Mail sind sensibel, nicht in Prod-Logs.
+    if (!env.isProd) {
+      // eslint-disable-next-line no-console
+      console.log(`\n[magic-link] for ${email}\n  ${url}\n`);
+    }
     return;
   }
 

@@ -11,30 +11,37 @@ import {
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { CONTACT_EMAIL, CONTACT_MAILTO_TAGESPLAN } from "@/lib/constants";
+import { getLocale } from "@/lib/i18n-server";
+import { t, type Locale } from "@/lib/i18n";
 import { BriefingAutoRefresh } from "./BriefingAutoRefresh";
+import { SendDayPlan } from "./SendDayPlan";
 
 interface Props {
   params: Promise<{ slug: string }>;
 }
 
 export const dynamic = "force-dynamic";
+// The polling/render itself is light, but this segment also re-reads the
+// briefing while the background pipeline finishes — keep headroom on free tier.
+export const maxDuration = 60;
 
 export default async function BriefingDetailPage({ params }: Props) {
+  const locale = await getLocale();
   const { slug } = await params;
   const rows = await db.select().from(briefings).where(eq(briefings.slug, slug)).limit(1);
   const briefing = rows[0];
   if (!briefing) notFound();
 
   if (briefing.status === "processing") {
-    return <ProcessingView title={briefing.title} />;
+    return <ProcessingView title={briefing.title} locale={locale} />;
   }
 
   if (briefing.status === "failed") {
-    return <FailedView title={briefing.title} message={briefing.errorMessage} />;
+    return <FailedView title={briefing.title} message={briefing.errorMessage} locale={locale} />;
   }
 
   if (!briefing.payload) {
-    return <FailedView title={briefing.title} message="Payload fehlt." />;
+    return <FailedView title={briefing.title} message={null} locale={locale} />;
   }
 
   let payload: BriefingPayload;
@@ -43,33 +50,33 @@ export default async function BriefingDetailPage({ params }: Props) {
   } catch (err) {
     // eslint-disable-next-line no-console
     console.error("[briefings/[slug]] payload validation failed:", err);
-    return (
-      <FailedView
-        title={briefing.title}
-        message="Briefing ist beschaedigt oder hat ein veraltetes Format. Bitte neu erzeugen."
-      />
-    );
+    return <FailedView title={briefing.title} message={null} locale={locale} />;
   }
 
-  return <ReadyView title={briefing.title} payload={payload} createdAt={briefing.createdAt} />;
+  return (
+    <ReadyView
+      slug={briefing.slug}
+      payload={payload}
+      createdAt={briefing.createdAt}
+      locale={locale}
+    />
+  );
 }
 
 /* ─── Views ─────────────────────────────────────────────────────────── */
 
-function ProcessingView({ title }: { title: string }) {
+function ProcessingView({ title, locale }: { title: string; locale: Locale }) {
+  const dict = t(locale).result;
   return (
     <>
       <header className="pagehero accent--sand">
         <span className="pagehero__blob" aria-hidden />
-        <SiteHeader />
-        <BriefingAutoRefresh />
+        <SiteHeader locale={locale} />
+        <BriefingAutoRefresh timeoutLabel={dict.pollTimeoutLabel} timeoutBody={dict.pollTimeoutBody} />
         <div className="pagehero__in">
-          <p className="pagehero__tag">In Arbeit</p>
-          <h1 className="pagehero__title">{title}</h1>
-          <p className="pagehero__sub">
-            Wir holen Recherche pro Termin und lassen Claude Sonnet 4.6
-            synthetisieren. Das dauert etwa 15-30 Sekunden pro Termin.
-          </p>
+          <p className="pagehero__tag">{dict.processingTag}</p>
+          <h1 className="pagehero__title">{dict.processingTitle}</h1>
+          <p className="pagehero__sub">{dict.processingSub}</p>
           <div
             style={{
               marginTop: "1.6rem",
@@ -88,32 +95,37 @@ function ProcessingView({ title }: { title: string }) {
             }}
           >
             <span className="dot-pulse" />
-            Aktualisiert sich automatisch
+            {dict.autoRefresh}
           </div>
         </div>
       </header>
       <section className="toolpage">
         <div className="toolpage__in">
-          <p style={{ color: "var(--soft)", maxWidth: "44rem" }}>
-            Sobald wir fertig sind, springt die Seite automatisch in den
-            Briefing-Modus. Du kannst auch jederzeit den Tab schliessen — der
-            Link bleibt in deinem Dashboard.
-          </p>
+          <p style={{ color: "var(--soft)", maxWidth: "44rem" }}>{dict.processingHint}</p>
         </div>
       </section>
-      <SiteFooter />
+      <SiteFooter locale={locale} />
     </>
   );
 }
 
-function FailedView({ title, message }: { title: string; message: string | null }) {
+function FailedView({
+  title,
+  message,
+  locale,
+}: {
+  title: string;
+  message: string | null;
+  locale: Locale;
+}) {
+  const dict = t(locale).result;
   return (
     <>
       <header className="pagehero accent--coral">
         <span className="pagehero__blob" aria-hidden />
-        <SiteHeader />
+        <SiteHeader locale={locale} />
         <div className="pagehero__in">
-          <p className="pagehero__tag">Etwas ist schiefgegangen</p>
+          <p className="pagehero__tag">{dict.failedTag}</p>
           <h1 className="pagehero__title">{title}</h1>
         </div>
       </header>
@@ -131,57 +143,57 @@ function FailedView({ title, message }: { title: string; message: string | null 
             }}
           >
             <p className="mono-label" style={{ color: "var(--coral-deep)" }}>
-              Fehlermeldung
+              {dict.failedLabel}
             </p>
             <p className="mt-3" style={{ color: "var(--ink)", lineHeight: 1.6 }}>
-              {message ??
-                "Wir konnten das Briefing nicht erzeugen. Versuche es nochmal, oder schreib uns."}
+              {message ?? dict.failedFallback}
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
-              <Link href="/dashboard" className="pill pill--ink pill--arrow">
-                Zurueck zum Dashboard
+              <Link href="/" className="pill pill--ink pill--arrow">
+                {dict.backHome}
               </Link>
               <Link href={`mailto:${CONTACT_EMAIL}`} className="pill pill--ghost">
-                Schreib uns
+                {dict.writeUs}
               </Link>
             </div>
           </div>
         </div>
       </section>
-      <SiteFooter />
+      <SiteFooter locale={locale} />
     </>
   );
 }
 
 function ReadyView({
-  title: _title,
+  slug,
   payload,
   createdAt,
+  locale,
 }: {
-  title: string;
+  slug: string;
   payload: BriefingPayload;
   createdAt: Date | string;
+  locale: Locale;
 }) {
-  const dateLabel = formatDateHuman(payload.date);
-  const generated = formatStamp(createdAt);
+  const dict = t(locale).result;
+  const dateLabel = formatDateHuman(payload.date, locale);
+  const generated = formatStamp(createdAt, locale);
 
   return (
     <>
       <header className="pagehero accent--sand">
         <span className="pagehero__blob" aria-hidden />
-        <SiteHeader cta={{ href: "/dashboard", label: "Neues Briefing" }} />
+        <SiteHeader cta={{ href: "/#calendar-form", label: dict.readyTag }} locale={locale} />
 
         <div className="pagehero__in">
-          <p className="pagehero__tag">Tagesbriefing</p>
+          <p className="pagehero__tag">{dict.readyTag}</p>
           <h1 className="pagehero__title">
             <em>{dateLabel.weekday}</em>
             <br />
             {dateLabel.dayMonth}
           </h1>
           <p className="pagehero__sub">
-            {payload.meetings.length === 1
-              ? "Ein Termin am Tag — und alles, was du dazu wissen solltest."
-              : `${payload.meetings.length} Termine am Tag, jeder mit eigener Karte. Scrollen, oben durchklicken oder Permalink teilen.`}
+            {payload.meetings.length === 1 ? dict.summaryOne : dict.summaryMany(payload.meetings.length)}
           </p>
           <div
             style={{
@@ -197,11 +209,11 @@ function ReadyView({
               flexWrap: "wrap",
             }}
           >
-            <span>Erstellt {generated}</span>
+            <span>{dict.createdAt(generated)}</span>
             {payload.isMock && (
               <>
                 <span style={{ opacity: 0.4 }}>·</span>
-                <span style={{ color: "var(--sand)" }}>Teilweise Mock-Modus</span>
+                <span style={{ color: "var(--sand)" }}>{dict.mockNote}</span>
               </>
             )}
           </div>
@@ -211,12 +223,9 @@ function ReadyView({
       <section className="toolpage">
         <div className="toolpage__in">
           {payload.meetings.length > 1 && (
-            <nav style={{ marginBottom: "clamp(2rem,3.5vw,3rem)" }}>
-              <p className="mono-label">Sprung zu Termin</p>
-              <ul
-                className="mt-3"
-                style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}
-              >
+            <nav style={{ marginBottom: "clamp(2rem,3.5vw,3rem)" }} aria-label={dict.jumpTo}>
+              <p className="mono-label">{dict.jumpTo}</p>
+              <ul className="mt-3" style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
                 {payload.meetings.map((m, i) => (
                   <li key={m.uid}>
                     <a
@@ -228,7 +237,7 @@ function ReadyView({
                         background: "#fff",
                       }}
                     >
-                      {formatTime(m.startsAt)} &middot; {truncateSummary(m.summary)}
+                      {formatTime(m.startsAt, locale)} &middot; {truncateSummary(m.summary)}
                     </a>
                   </li>
                 ))}
@@ -238,15 +247,28 @@ function ReadyView({
 
           <div style={{ display: "flex", flexDirection: "column", gap: "clamp(2rem,3vw,3rem)" }}>
             {payload.meetings.map((m, i) => (
-              <MeetingBriefCard key={m.uid} meeting={m} index={i} />
+              <MeetingBriefCard key={m.uid} meeting={m} index={i} locale={locale} />
             ))}
+          </div>
+
+          {/* Optional: email me this day-plan */}
+          <div
+            style={{
+              marginTop: "clamp(2.5rem,4vw,4rem)",
+              padding: "clamp(1.8rem,3vw,2.4rem)",
+              background: "var(--ink-deep)",
+              color: "var(--cream)",
+              borderRadius: "var(--rl)",
+            }}
+          >
+            <SendDayPlan slug={slug} locale={locale} />
           </div>
 
           {/* Lead CTA */}
           <div
             className="grid items-center gap-6 md:grid-cols-[1.6fr_1fr]"
             style={{
-              marginTop: "clamp(3rem,5vw,5rem)",
+              marginTop: "clamp(2rem,3.5vw,3rem)",
               padding: "clamp(2rem,3.5vw,2.8rem)",
               background: "var(--ink)",
               color: "var(--cream)",
@@ -267,7 +289,7 @@ function ReadyView({
                 }}
               >
                 <span style={{ width: "1.6rem", height: "2px", background: "var(--sand)" }} />
-                Hilft das?
+                {dict.leadEyebrow}
               </p>
               <h2
                 style={{
@@ -278,7 +300,7 @@ function ReadyView({
                   lineHeight: 1.08,
                 }}
               >
-                Wenn ja: schreib uns.
+                {dict.leadTitle}
               </h2>
               <p
                 style={{
@@ -288,35 +310,42 @@ function ReadyView({
                   maxWidth: "44ch",
                 }}
               >
-                Wir koennen dein Limit hochsetzen, das Tool an dein Setup
-                anpassen, oder ueberlegen, ob daraus eine richtige Loesung
-                wird. Lab-Tools sind ein Lead-Magnet, kein SaaS.
+                {dict.leadText}
               </p>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "0.7rem" }}>
               <Link href={CONTACT_MAILTO_TAGESPLAN} className="pill pill--coral pill--arrow">
                 {CONTACT_EMAIL}
               </Link>
-              <Link
-                href="https://labs.appsales-consulting.de"
-                className="pill pill--ghost-dark"
-              >
-                Mehr aus den Labs
+              <Link href="https://labs.appsales-consulting.de" className="pill pill--ghost-dark">
+                {dict.leadMore}
               </Link>
             </div>
           </div>
         </div>
       </section>
 
-      <SiteFooter />
+      <SiteFooter locale={locale} />
     </>
   );
 }
 
-function MeetingBriefCard({ meeting, index }: { meeting: BriefingMeeting; index: number }) {
-  const accent = ["coral", "petrol", "sand", "sage"][index % 4];
+const ACCENTS = ["coral", "petrol", "sand"] as const;
+
+function MeetingBriefCard({
+  meeting,
+  index,
+  locale,
+}: {
+  meeting: BriefingMeeting;
+  index: number;
+  locale: Locale;
+}) {
+  const dict = t(locale).result;
+  // Per-meeting accent rotation: sand / petrol / coral cycling.
+  const accent = ACCENTS[index % ACCENTS.length];
   const accentVar = `var(--${accent})`;
-  const time = `${formatTime(meeting.startsAt)} – ${formatTime(meeting.endsAt)}`;
+  const time = `${formatTime(meeting.startsAt, locale)} – ${formatTime(meeting.endsAt, locale)}`;
   const allCitations = [
     ...(meeting.brief.citations ?? []),
     ...(meeting.citationsExtra ?? []),
@@ -331,25 +360,16 @@ function MeetingBriefCard({ meeting, index }: { meeting: BriefingMeeting; index:
       }}
     >
       <header className="flex flex-wrap items-baseline gap-x-5 gap-y-2 mb-5">
-        <span
-          className="font-mono text-[0.78rem] tracking-[0.12em] uppercase"
-          style={{ color: accentVar }}
-        >
+        <span className="font-mono text-[0.78rem] tracking-[0.12em] uppercase" style={{ color: accentVar }}>
           {time}
         </span>
         {meeting.location && (
-          <span
-            className="font-mono text-[0.72rem] tracking-wider uppercase"
-            style={{ color: "var(--soft)" }}
-          >
+          <span className="font-mono text-[0.72rem] tracking-wider uppercase" style={{ color: "var(--soft)" }}>
             {meeting.location}
           </span>
         )}
         {meeting.hints.companyGuess && (
-          <span
-            className="font-mono text-[0.72rem] tracking-wider uppercase"
-            style={{ color: "var(--soft)" }}
-          >
+          <span className="font-mono text-[0.72rem] tracking-wider uppercase" style={{ color: "var(--soft)" }}>
             {meeting.hints.companyGuess}
           </span>
         )}
@@ -362,22 +382,22 @@ function MeetingBriefCard({ meeting, index }: { meeting: BriefingMeeting; index:
       <div className="mt-6 grid gap-8 md:grid-cols-[1.4fr_1fr]">
         <div>
           {meeting.brief.status && (
-            <Block label="Wo stehen wir">
+            <Block label={dict.blockStatus}>
               <p className="leading-relaxed">{meeting.brief.status}</p>
             </Block>
           )}
           {meeting.brief.companyContext && (
-            <Block label="Firma">
+            <Block label={dict.blockCompany}>
               <p className="leading-relaxed">{meeting.brief.companyContext}</p>
             </Block>
           )}
           {meeting.brief.personContext && (
-            <Block label="Person">
+            <Block label={dict.blockPerson}>
               <p className="leading-relaxed">{meeting.brief.personContext}</p>
             </Block>
           )}
           {meeting.brief.conceptProposal && (
-            <Block label="Konzept-Vorschlag" accent={accentVar}>
+            <Block label={dict.blockConcept} accent={accentVar}>
               <p className="leading-relaxed">{meeting.brief.conceptProposal}</p>
             </Block>
           )}
@@ -385,16 +405,16 @@ function MeetingBriefCard({ meeting, index }: { meeting: BriefingMeeting; index:
 
         <aside className="space-y-7">
           {meeting.brief.talkingPoints.length > 0 && (
-            <Block label="Talking Points">
+            <Block label={dict.blockTalkingPoints}>
               <ul className="space-y-2.5">
-                {meeting.brief.talkingPoints.map((t, i) => (
+                {meeting.brief.talkingPoints.map((tp, i) => (
                   <li key={i} className="flex gap-3">
                     <span
                       aria-hidden
                       className="mt-2 block h-2 w-2 rounded-sm flex-none"
                       style={{ background: accentVar }}
                     />
-                    <span className="leading-relaxed">{t}</span>
+                    <span className="leading-relaxed">{tp}</span>
                   </li>
                 ))}
               </ul>
@@ -402,7 +422,7 @@ function MeetingBriefCard({ meeting, index }: { meeting: BriefingMeeting; index:
           )}
 
           {meeting.brief.recentNews.length > 0 && (
-            <Block label="Juengste News">
+            <Block label={dict.blockNews}>
               <ul className="space-y-2 text-[0.92rem]">
                 {meeting.brief.recentNews.map((n, i) => (
                   <li key={i} className="leading-relaxed" style={{ color: "var(--soft)" }}>
@@ -414,7 +434,7 @@ function MeetingBriefCard({ meeting, index }: { meeting: BriefingMeeting; index:
           )}
 
           {meeting.brief.openQuestions.length > 0 && (
-            <Block label="Offene Fragen">
+            <Block label={dict.blockQuestions}>
               <ul className="space-y-2 text-[0.92rem]">
                 {meeting.brief.openQuestions.map((q, i) => (
                   <li key={i} className="leading-relaxed">
@@ -426,7 +446,7 @@ function MeetingBriefCard({ meeting, index }: { meeting: BriefingMeeting; index:
           )}
 
           {allCitations.length > 0 && (
-            <Block label="Quellen">
+            <Block label={dict.blockSources}>
               <ul className="space-y-1.5 text-[0.84rem]">
                 {allCitations.slice(0, 6).map((c, i) => (
                   <li key={i}>
@@ -472,26 +492,27 @@ function Block({
   );
 }
 
-function formatDateHuman(iso: string): { weekday: string; dayMonth: string } {
+function formatDateHuman(iso: string, locale: Locale): { weekday: string; dayMonth: string } {
+  const intl = locale === "en" ? "en-GB" : "de-DE";
   const [y, m, d] = iso.split("-").map(Number);
   const date = new Date(y, m - 1, d);
   return {
-    weekday: date.toLocaleDateString("de-DE", { weekday: "long" }),
-    dayMonth: date.toLocaleDateString("de-DE", { day: "2-digit", month: "long", year: "numeric" }),
+    weekday: date.toLocaleDateString(intl, { weekday: "long" }),
+    dayMonth: date.toLocaleDateString(intl, { day: "2-digit", month: "long", year: "numeric" }),
   };
 }
 
-function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString("de-DE", {
+function formatTime(iso: string, locale: Locale): string {
+  return new Date(iso).toLocaleTimeString(locale === "en" ? "en-GB" : "de-DE", {
     hour: "2-digit",
     minute: "2-digit",
     timeZone: "Europe/Berlin",
   });
 }
 
-function formatStamp(d: Date | string): string {
+function formatStamp(d: Date | string, locale: Locale): string {
   const date = d instanceof Date ? d : new Date(d);
-  return date.toLocaleString("de-DE", {
+  return date.toLocaleString(locale === "en" ? "en-GB" : "de-DE", {
     day: "2-digit",
     month: "short",
     hour: "2-digit",

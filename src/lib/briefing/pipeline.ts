@@ -9,15 +9,25 @@
  * once with `processing`, then with `ready` / `failed`.
  */
 
+import { after } from "next/server";
 import { and, eq, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { z } from "zod";
 import { db } from "../db/client";
 import { briefingRuns, briefings, dailyCounters } from "../db/schema";
 import { env } from "../env";
+import type { Locale } from "../i18n";
 import { fetchIcal, filterEventsForDate, type CalendarEvent } from "../calendar/ical";
 import { researchEvent, type ResearchBundle } from "../research/research";
 import { meetingBriefSchema, synthesiseMeeting } from "../llm/synthesize";
+
+/**
+ * Free-tier bound: we only ever process the first N events of the day so a
+ * single Vercel function invocation (concurrency 3 below) stays inside the
+ * 60s budget. The hero form date-picker keeps days realistic, but a busy
+ * calendar with 15 meetings would otherwise blow the timeout.
+ */
+const MAX_EVENTS_PER_DAY = 8;
 
 const meetingHintsSchema = z.object({
   companyGuess: z.string().optional(),
@@ -53,10 +63,11 @@ export type BriefingPayload = z.infer<typeof briefingPayloadSchema>;
 export type BriefingMeeting = z.infer<typeof briefingMeetingSchema>;
 
 export interface CreateBriefingInput {
-  userId: string;
-  userEmail: string;
+  userId?: string | null;
+  userEmail?: string | null;
   icalUrl: string;
   date: string; // YYYY-MM-DD
+  locale?: Locale;
 }
 
 export interface CreateBriefingResult {
@@ -79,21 +90,33 @@ export interface CreateBriefingError {
 export async function createBriefing(
   input: CreateBriefingInput,
 ): Promise<CreateBriefingResult | CreateBriefingError> {
+  const locale: Locale = input.locale ?? "de";
+  const en = locale === "en";
+  const email = input.userEmail ? input.userEmail.toLowerCase() : null;
+
   // ─── Rate-Limit-Check ────────────────────────────────────────────────
-  const emailUses = await countSuccessfulRuns(input.userEmail);
-  if (emailUses >= env.limitPerEmail) {
-    return {
-      ok: false,
-      error: `Du hast dein Limit von ${env.limitPerEmail} Briefings erreicht. Schreib uns, wenn du mehr willst.`,
-      code: "rate_limit_email",
-    };
+  // Per-E-Mail-Check NUR wenn eine E-Mail vorliegt (anonyme iCal-Laeufe sind
+  // barrierefrei). Der globale Tageszaehler greift IMMER.
+  if (email) {
+    const emailUses = await countSuccessfulRuns(email);
+    if (emailUses >= env.limitPerEmail) {
+      return {
+        ok: false,
+        error: en
+          ? `You've hit your limit of ${env.limitPerEmail} briefings. Drop us a line if you want more.`
+          : `Du hast dein Limit von ${env.limitPerEmail} Briefings erreicht. Schreib uns, wenn du mehr willst.`,
+        code: "rate_limit_email",
+      };
+    }
   }
 
   const dailyOk = await tryIncrementDailyCounter(env.limitGlobalDaily);
   if (!dailyOk) {
     return {
       ok: false,
-      error: "Tageslimit erreicht. Probiere es morgen wieder, oder schreib uns.",
+      error: en
+        ? "Daily limit reached. Try again tomorrow, or drop us a line."
+        : "Tageslimit erreicht. Probiere es morgen wieder, oder schreib uns.",
       code: "rate_limit_global",
     };
   }
@@ -104,14 +127,19 @@ export async function createBriefing(
     return { ok: false, error: ical.error, code: "fetch" };
   }
 
-  const dayEvents = filterEventsForDate(ical.events, input.date);
-  if (dayEvents.length === 0) {
+  const allDayEvents = filterEventsForDate(ical.events, input.date);
+  if (allDayEvents.length === 0) {
     return {
       ok: false,
-      error: `Keine Termine fuer ${formatHumanDate(input.date)} im Kalender gefunden.`,
+      error: en
+        ? `No events found for ${formatHumanDate(input.date, locale)} in the calendar.`
+        : `Keine Termine fuer ${formatHumanDate(input.date, locale)} im Kalender gefunden.`,
       code: "no_events",
     };
   }
+
+  // Free-tier cap: only the first MAX_EVENTS_PER_DAY events get processed.
+  const dayEvents = allDayEvents.slice(0, MAX_EVENTS_PER_DAY);
 
   // ─── Persist row in `processing` state ───────────────────────────────
   const id = nanoid();
@@ -120,12 +148,12 @@ export async function createBriefing(
   await db.insert(briefings).values({
     id,
     slug,
-    userId: input.userId,
-    userEmail: input.userEmail,
+    userId: input.userId ?? null,
+    userEmail: email,
     date: input.date,
     calendarSource: "ical-url",
     calendarUrl: input.icalUrl,
-    title: `Briefing ${formatHumanDate(input.date)}`,
+    title: `${en ? "Briefing" : "Briefing"} ${formatHumanDate(input.date, locale)}`,
     status: "processing",
     payload: null,
     createdAt: now,
@@ -134,18 +162,29 @@ export async function createBriefing(
 
   await db.insert(briefingRuns).values({
     id: nanoid(),
-    userEmail: input.userEmail,
+    userEmail: email,
     briefingId: id,
     succeeded: false,
     createdAt: now,
   });
 
-  // ─── Kick off async pipeline. Don't await — the action returns and
-  // the user lands on the result page which polls. ────────────────────
-  runPipelineInBackground(id, slug, input, dayEvents).catch((err) => {
-    // eslint-disable-next-line no-console
-    console.error("[pipeline] background error:", err);
-  });
+  // ─── Background pipeline ─────────────────────────────────────────────
+  // `after()` schedules the heavy work to run AFTER the response is sent but
+  // still inside the function's lifetime on Vercel — far more reliable on the
+  // free tier than a bare fire-and-forget promise, which the platform may kill
+  // the moment the action returns. Outside a request scope (scripts/tests)
+  // `after()` throws, so we fall back to fire-and-forget there.
+  const run = () =>
+    runPipelineInBackground(id, slug, { ...input, locale }, dayEvents).catch((err) => {
+      // eslint-disable-next-line no-console
+      console.error("[pipeline] background error:", err);
+    });
+
+  try {
+    after(run);
+  } catch {
+    void run();
+  }
 
   return { ok: true, briefingId: id, slug };
 }
@@ -156,20 +195,27 @@ async function runPipelineInBackground(
   input: CreateBriefingInput,
   events: CalendarEvent[],
 ): Promise<void> {
+  const locale: Locale = input.locale ?? "de";
+  const en = locale === "en";
   try {
-    // Cap concurrency at 3 to avoid hammering Tavily + Anthropic
+    // Cap concurrency at 3 to avoid hammering Tavily + Anthropic. Combined
+    // with the MAX_EVENTS_PER_DAY slice upstream this keeps a single Vercel
+    // free-tier invocation inside the 60s budget.
     const meetings: BriefingMeeting[] = new Array(events.length);
     let isAnyMock = false;
     const concurrency = 3;
     let cursor = 0;
+    // extractHints filters out the user's own email from attendees; empty
+    // string is a safe no-op for anonymous runs.
+    const researchEmail = input.userEmail ?? "";
 
     const worker = async () => {
       while (cursor < events.length) {
         const i = cursor++;
         const event = events[i];
         try {
-          const research = await researchEvent(event, input.userEmail);
-          const synth = await synthesiseMeeting(event, research);
+          const research = await researchEvent(event, researchEmail);
+          const synth = await synthesiseMeeting(event, research, locale);
           if (synth.isMock || research.isMock) isAnyMock = true;
 
           meetings[i] = {
@@ -197,7 +243,9 @@ async function runPipelineInBackground(
             hints: { externalAttendees: [] },
             brief: {
               headline: event.summary,
-              status: `Recherche fuer diesen Termin fehlgeschlagen: ${err instanceof Error ? err.message : "unbekannt"}`,
+              status: en
+                ? `Research for this meeting failed: ${err instanceof Error ? err.message : "unknown"}`
+                : `Recherche fuer diesen Termin fehlgeschlagen: ${err instanceof Error ? err.message : "unbekannt"}`,
               companyContext: "",
               recentNews: [],
               talkingPoints: [],
@@ -302,10 +350,10 @@ async function tryIncrementDailyCounter(cap: number): Promise<boolean> {
   return true;
 }
 
-function formatHumanDate(iso: string): string {
+function formatHumanDate(iso: string, locale: Locale = "de"): string {
   const [y, m, d] = iso.split("-").map(Number);
   const date = new Date(y, m - 1, d);
-  return date.toLocaleDateString("de-DE", {
+  return date.toLocaleDateString(locale === "en" ? "en-GB" : "de-DE", {
     weekday: "long",
     day: "2-digit",
     month: "long",

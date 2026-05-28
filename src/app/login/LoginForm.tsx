@@ -2,12 +2,15 @@
 
 import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
+import { t, type Locale } from "@/lib/i18n";
 
 interface Props {
   callback?: string;
+  locale: Locale;
 }
 
-export function LoginForm({ callback = "/dashboard" }: Props) {
+export function LoginForm({ callback = "/dashboard", locale }: Props) {
+  const dict = t(locale).login;
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [error, setError] = useState<string>("");
@@ -25,14 +28,14 @@ export function LoginForm({ callback = "/dashboard" }: Props) {
 
       if (err) {
         setStatus("error");
-        setError(err.message || "Login fehlgeschlagen.");
+        setError(err.message || dict.failed);
         return;
       }
 
       setStatus("sent");
     } catch (err) {
       setStatus("error");
-      setError(err instanceof Error ? err.message : "Login fehlgeschlagen.");
+      setError(err instanceof Error ? err.message : dict.failed);
     }
   }
 
@@ -43,13 +46,11 @@ export function LoginForm({ callback = "/dashboard" }: Props) {
           className="font-mono text-[0.72rem] tracking-[0.12em] uppercase"
           style={{ color: "var(--petrol)" }}
         >
-          Check deine Mailbox
+          {dict.sentLabel}
         </p>
-        <h3 className="h3 mt-3">Wir haben dir den Link geschickt.</h3>
+        <h3 className="h3 mt-3">{dict.sentTitle}</h3>
         <p className="mt-3 text-[0.95rem] leading-relaxed" style={{ color: "var(--soft)" }}>
-          An <b>{email}</b>. Klick rein, du landest direkt im Dashboard. Falls
-          er nicht in 1-2 Minuten ankommt: schau im Spam-Ordner, oder
-          versuch&apos;s nochmal.
+          <b>{email}</b> — {dict.sentBody}
         </p>
         <button
           type="button"
@@ -57,7 +58,7 @@ export function LoginForm({ callback = "/dashboard" }: Props) {
           className="mt-5 text-[0.85rem] underline decoration-2 underline-offset-4"
           style={{ color: "var(--coral)" }}
         >
-          Andere Adresse benutzen
+          {dict.otherAddress}
         </button>
       </div>
     );
@@ -67,7 +68,7 @@ export function LoginForm({ callback = "/dashboard" }: Props) {
     <form onSubmit={handleSubmit} className="space-y-5">
       <div className="field">
         <label htmlFor="email" className="field__label">
-          E-Mail-Adresse
+          {dict.emailLabel}
         </label>
         <input
           id="email"
@@ -76,7 +77,7 @@ export function LoginForm({ callback = "/dashboard" }: Props) {
           autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="du@firma.de"
+          placeholder={dict.emailPlaceholder}
           className="field__input"
           disabled={status === "sending"}
         />
@@ -87,7 +88,7 @@ export function LoginForm({ callback = "/dashboard" }: Props) {
         disabled={status === "sending" || !email.trim()}
         className="pill pill--ink pill--arrow w-full justify-center"
       >
-        {status === "sending" ? "Schicke Link..." : "Magic Link senden"}
+        {status === "sending" ? dict.submitPending : dict.submit}
       </button>
     </form>
   );

@@ -1,33 +1,38 @@
 import Link from "next/link";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
-import { CONTACT_EMAIL } from "@/lib/constants";
-import { LandingEmailGate } from "./LandingEmailGate";
+import { CONTACT_EMAIL, CONTACT_MAILTO_TAGESPLAN } from "@/lib/constants";
+import { getLocale } from "@/lib/i18n-server";
+import { t } from "@/lib/i18n";
+import { CalendarForm } from "./_components/calendar-form";
 
 export const dynamic = "force-dynamic";
+// Free-tier: the public briefing action runs the pipeline kickoff + DB writes
+// and schedules background work via `after()`. Give the route segment headroom.
+export const maxDuration = 60;
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const locale = await getLocale();
+  const dict = t(locale);
+
   return (
     <>
       {/* ─── Pagehero (Sand-Accent, asymmetrisch) ────────────────── */}
       <header className="pagehero accent--sand">
         <span className="pagehero__blob" aria-hidden />
-        <SiteHeader cta={{ href: "/login", label: "Login" }} />
+        <SiteHeader cta={{ href: "/login", label: dict.nav.login }} locale={locale} />
 
         <div className="pagehero__in">
-          <p className="pagehero__tag">Werkzeug &middot; AppSales Labs</p>
+          <p className="pagehero__tag">{dict.hero.tag}</p>
           <h1 className="pagehero__title">
-            Wach auf, <em>jeder Termin</em><br />
-            ist schon gebrieft.
+            {dict.hero.titleBefore}
+            <em>{dict.hero.titleEm}</em>
+            {dict.hero.titleAfter}
           </h1>
-          <p className="pagehero__sub">
-            Du gibst uns deinen Kalender. Wir liefern ein 1-Pager-Briefing pro
-            Termin: Firma, Person, juengste News, Talking Points, Konzept-Idee.
-            Recherche von Tavily, Synthese von Claude.
-          </p>
+          <p className="pagehero__sub">{dict.hero.sub}</p>
 
-          <div style={{ marginTop: "2.4rem", maxWidth: "32rem" }}>
-            <LandingEmailGate />
+          <div style={{ marginTop: "2.4rem", maxWidth: "38rem" }}>
+            <CalendarForm locale={locale} />
           </div>
 
           <p
@@ -40,7 +45,7 @@ export default function LandingPage() {
               color: "rgba(250,247,242,0.62)",
             }}
           >
-            Kostenlos &middot; 3 Briefings pro E-Mail &middot; kein Newsletter
+            {dict.hero.note}
           </p>
         </div>
       </header>
@@ -50,70 +55,66 @@ export default function LandingPage() {
         <div className="toolpage__in">
           <div className="toolpage__intro">
             <div>
-              <p className="eyebrow">Drei Wege rein</p>
-              <h2 className="toolpage__heading">
-                Such dir aus, wie du uns deinen Kalender gibst.
-              </h2>
+              <p className="eyebrow">{dict.ways.eyebrow}</p>
+              <h2 className="toolpage__heading">{dict.ways.heading}</h2>
             </div>
-            <p className="toolpage__copy">
-              Wir bauen die Pipeline so, wie es fuer dich Sinn ergibt. iCal-Link
-              ist am schnellsten, Google-OAuth am bequemsten, Service-Mail am
-              sichersten. Alle drei landen am selben Briefing.
-            </p>
+            <p className="toolpage__copy">{dict.ways.intro}</p>
           </div>
 
           <div className="calsrc-grid">
             <article className="calsrc accent--petrol">
               <p className="calsrc__cap">
-                Variante <b>A</b>
+                <CapLabel cap={dict.ways.a.cap} />
               </p>
-              <h3 className="calsrc__title">iCal-URL einkleben</h3>
-              <p className="calsrc__copy">
-                Google, Apple, Outlook — alle koennen eine geheime, read-only
-                iCal-Adresse exportieren. Schnellster Weg, kein OAuth-Eiertanz.
-              </p>
-              <Link href="/login?from=ical" className="calsrc__meta">
-                Sofort starten
+              <h3 className="calsrc__title">{dict.ways.a.title}</h3>
+              <p className="calsrc__copy">{dict.ways.a.copy}</p>
+              <Link href="/#calendar-form" className="calsrc__meta">
+                {dict.ways.a.cta}
               </Link>
             </article>
 
             <article className="calsrc accent--sand">
               <p className="calsrc__cap">
-                Variante <b>B</b>
+                <CapLabel cap={dict.ways.b.cap} />
               </p>
-              <h3 className="calsrc__title">Service-Mail einladen</h3>
+              <h3 className="calsrc__title">{dict.ways.b.title}</h3>
               <p className="calsrc__copy">
-                Du teilst deinen Google-Kalender mit{" "}
-                <code
-                  style={{
-                    fontFamily: "var(--mono)",
-                    fontSize: "0.88em",
-                    background: "var(--cream-2)",
-                    padding: "0.06em 0.34em",
-                    borderRadius: "5px",
-                    color: "var(--coral-deep)",
-                  }}
-                >
-                  briefing@appsales-consulting.com
-                </code>
-                . Read-only. Wir pollen, sobald du ein Briefing willst.
+                {dict.ways.b.copy.split("briefing@appsales-consulting.com").map((part, i, arr) =>
+                  i < arr.length - 1 ? (
+                    <span key={i}>
+                      {part}
+                      <code
+                        style={{
+                          fontFamily: "var(--mono)",
+                          fontSize: "0.88em",
+                          background: "var(--cream-2)",
+                          padding: "0.06em 0.34em",
+                          borderRadius: "5px",
+                          color: "var(--coral-deep)",
+                        }}
+                      >
+                        briefing@appsales-consulting.com
+                      </code>
+                    </span>
+                  ) : (
+                    <span key={i}>{part}</span>
+                  ),
+                )}
               </p>
-              <Link href="/login?from=share" className="calsrc__meta">
-                Anleitung sehen
+              <span className="calsrc__badge">{dict.ways.b.badge}</span>
+              <Link href="/about" className="calsrc__meta">
+                {dict.ways.b.cta}
               </Link>
             </article>
 
             <article className="calsrc accent--coral">
               <p className="calsrc__cap">
-                Variante <b>C</b>
+                <CapLabel cap={dict.ways.c.cap} />
               </p>
-              <h3 className="calsrc__title">Mit Google verbinden</h3>
-              <p className="calsrc__copy">
-                OAuth-Login mit Google. Bequemster Weg fuer Workspace-Nutzer.
-                Wir lesen ausschliesslich deine Termine — sonst nichts.
-              </p>
+              <h3 className="calsrc__title">{dict.ways.c.title}</h3>
+              <p className="calsrc__copy">{dict.ways.c.copy}</p>
               <Link href="/login?from=google" className="calsrc__meta">
-                Verbinden
+                {dict.ways.c.cta}
               </Link>
             </article>
           </div>
@@ -136,7 +137,7 @@ export default function LandingPage() {
           }}
         >
           <div>
-            <p className="eyebrow">Pro Termin</p>
+            <p className="eyebrow">{dict.benefits.eyebrow}</p>
             <h2
               className="mt-4"
               style={{
@@ -147,24 +148,26 @@ export default function LandingPage() {
                 maxWidth: "24ch",
               }}
             >
-              Eine Karte, die du wirklich lesen willst.
+              {dict.benefits.title}
             </h2>
             <p className="mt-5" style={{ color: "var(--soft)", lineHeight: 1.65, maxWidth: "44ch" }}>
-              Keine generischen "Hier sind 7 Punkte ueber das Unternehmen"-Texte.
-              Direkte Lage-Einschaetzung, drei bis fuenf Anker fuers Gespraech,
-              ein konkreter Vorschlag fuer das Konzept.
+              {dict.benefits.intro}
             </p>
             <ul className="mt-7 space-y-3" style={{ color: "var(--ink)", fontSize: "0.97rem", lineHeight: 1.55 }}>
-              <Feature>Firmenkontext (Branche, Standort, Produkt)</Feature>
-              <Feature>Juengste News der letzten 90 Tage</Feature>
-              <Feature>Personen-Hinweise (Rolle, Hintergrund)</Feature>
-              <Feature>Konkretes Konzept fuer den Termin</Feature>
-              <Feature>Offene Fragen vor dem Gespraech</Feature>
-              <Feature>Verlinkte Quellen</Feature>
+              {dict.benefits.items.map((item) => (
+                <Feature key={item}>{item}</Feature>
+              ))}
             </ul>
           </div>
 
-          <MockBriefCard />
+          <MockBriefCard
+            cap={dict.benefits.mock.cap}
+            tag={dict.benefits.mock.tag}
+            title={dict.benefits.mock.title}
+            body={dict.benefits.mock.body}
+            pointsLabel={dict.benefits.mock.pointsLabel}
+            points={dict.benefits.mock.points}
+          />
         </div>
       </section>
 
@@ -178,7 +181,7 @@ export default function LandingPage() {
             paddingRight: "var(--gut)",
           }}
         >
-          <p className="eyebrow">Pipeline</p>
+          <p className="eyebrow">{dict.pipeline.eyebrow}</p>
           <h2
             className="mt-4"
             style={{
@@ -189,28 +192,19 @@ export default function LandingPage() {
               maxWidth: "32ch",
             }}
           >
-            Drei Schritte zwischen Kalender und Briefing.
+            {dict.pipeline.title}
           </h2>
 
           <div className="mt-12 grid gap-6 md:grid-cols-3">
-            <StepNum
-              num="01"
-              title="Kalender holen"
-              body="iCal-Link, Service-Mail-Share oder OAuth. Wir holen die Termine fuer den gewaehlten Tag, parsen Titel und Attendees, leiten Firma und Person ab."
-              tone="petrol"
-            />
-            <StepNum
-              num="02"
-              title="Recherche"
-              body="Tavily liefert pro Termin saubere Snippets zu Firma, juengsten News und Person. Kein Scraping, keine Bullshit-Quellen — was reinkommt, ist verlinkbar."
-              tone="sand"
-            />
-            <StepNum
-              num="03"
-              title="Synthese"
-              body="Claude Sonnet 4.6 verdichtet zu einem Briefing: Status, Talking Points, Konzept-Vorschlag, offene Fragen. AI-Slop wird gefiltert."
-              tone="coral"
-            />
+            {dict.pipeline.steps.map((step, i) => (
+              <StepNum
+                key={step.num}
+                num={step.num}
+                title={step.title}
+                body={step.body}
+                tone={(["petrol", "sand", "coral"] as const)[i] ?? "petrol"}
+              />
+            ))}
           </div>
         </div>
       </section>
@@ -240,7 +234,7 @@ export default function LandingPage() {
                 }}
               >
                 <span style={{ width: "1.6rem", height: "2px", background: "var(--coral)" }} />
-                Probiers aus
+                {dict.bottomCta.eyebrow}
               </p>
               <h2
                 style={{
@@ -252,8 +246,7 @@ export default function LandingPage() {
                   maxWidth: "20ch",
                 }}
               >
-                Ein Login, drei Briefings,<br />
-                kein Bullshit.
+                {dict.bottomCta.title}
               </h2>
               <p
                 style={{
@@ -263,28 +256,38 @@ export default function LandingPage() {
                   maxWidth: "42ch",
                 }}
               >
-                Du bekommst einen Magic Link auf deine Mail. Klicken, drin sein.
-                Kein Passwort, kein Tracking, keine Newsletter.
+                {dict.bottomCta.text}
               </p>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
-              <Link href="/login" className="pill pill--coral pill--arrow">
-                Briefing erzeugen
+              <Link href="/#calendar-form" className="pill pill--coral pill--arrow">
+                {dict.bottomCta.primary}
               </Link>
-              <Link href={`mailto:${CONTACT_EMAIL}`} className="pill pill--ghost-dark">
-                Schreib uns
+              <Link href={CONTACT_MAILTO_TAGESPLAN} className="pill pill--ghost-dark">
+                {dict.bottomCta.secondary}
               </Link>
             </div>
           </div>
         </div>
       </section>
 
-      <SiteFooter />
+      <SiteFooter locale={locale} />
     </>
   );
 }
 
 /* ─── Helpers ─────────────────────────────────────────────────── */
+
+/** Renders "Variante A" / "Option A" with the trailing letter bolded. */
+function CapLabel({ cap }: { cap: string }) {
+  const idx = cap.lastIndexOf(" ");
+  if (idx < 0) return <>{cap}</>;
+  return (
+    <>
+      {cap.slice(0, idx)} <b>{cap.slice(idx + 1)}</b>
+    </>
+  );
+}
 
 function StepNum({
   num,
@@ -343,7 +346,21 @@ function Feature({ children }: { children: React.ReactNode }) {
   );
 }
 
-function MockBriefCard() {
+function MockBriefCard({
+  cap,
+  tag,
+  title,
+  body,
+  pointsLabel,
+  points,
+}: {
+  cap: string;
+  tag: string;
+  title: string;
+  body: string;
+  pointsLabel: string;
+  points: string[];
+}) {
   return (
     <div
       style={{
@@ -377,7 +394,7 @@ function MockBriefCard() {
             color: "var(--coral)",
           }}
         >
-          10:30 &middot; Industriehersteller
+          {cap}
         </span>
         <span
           style={{
@@ -388,38 +405,25 @@ function MockBriefCard() {
             color: "var(--soft)",
           }}
         >
-          DACH-Service
+          {tag}
         </span>
       </div>
-      <h3 className="h3 mt-3">Wo stehen wir?</h3>
+      <h3 className="h3 mt-3">{title}</h3>
       <p className="mt-3" style={{ color: "var(--ink)", fontSize: "0.95rem", lineHeight: 1.6 }}>
-        Erstgespraech mit dem Leiter Aftermarket. Bereich wurde 2024 in eigene
-        GmbH ueberfuehrt, suchen jetzt einen Service-Daten-Layer.
+        {body}
       </p>
       <div className="mt-5 pt-5" style={{ borderTop: "1px solid rgba(24,20,16,0.08)" }}>
-        <p className="mono-label">Talking Points</p>
+        <p className="mono-label">{pointsLabel}</p>
         <ul className="mt-3 space-y-2" style={{ fontSize: "0.92rem", lineHeight: 1.55 }}>
-          <li className="flex gap-2">
-            <span
-              className="mt-2 block h-1.5 w-1.5 rounded-full flex-none"
-              style={{ background: "var(--coral)" }}
-            />
-            <span>Wer eigentlich hat die Service-Daten-Hoheit?</span>
-          </li>
-          <li className="flex gap-2">
-            <span
-              className="mt-2 block h-1.5 w-1.5 rounded-full flex-none"
-              style={{ background: "var(--coral)" }}
-            />
-            <span>Wie liefert ihr heute Wartungspakete an Kunden?</span>
-          </li>
-          <li className="flex gap-2">
-            <span
-              className="mt-2 block h-1.5 w-1.5 rounded-full flex-none"
-              style={{ background: "var(--coral)" }}
-            />
-            <span>SAP-Migration: blockiert oder Chance?</span>
-          </li>
+          {points.map((p) => (
+            <li key={p} className="flex gap-2">
+              <span
+                className="mt-2 block h-1.5 w-1.5 rounded-full flex-none"
+                style={{ background: "var(--coral)" }}
+              />
+              <span>{p}</span>
+            </li>
+          ))}
         </ul>
       </div>
     </div>

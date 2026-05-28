@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { LangToggle } from "@/components/LangToggle";
+import { t, type Locale } from "@/lib/i18n";
 
 interface Props {
   /**
@@ -9,14 +11,13 @@ interface Props {
    */
   tone?: "dark" | "cream";
   cta?: { href: string; label: string };
+  locale: Locale;
 }
 
-export function SiteHeader({ tone = "dark", cta }: Props) {
+export function SiteHeader({ tone = "dark", cta, locale }: Props) {
+  const dict = t(locale);
   return (
-    <div
-      role="banner"
-      className={tone === "cream" ? "lnav lnav--cream" : "lnav"}
-    >
+    <div role="banner" className={tone === "cream" ? "lnav lnav--cream" : "lnav"}>
       <Link href="/" className="lnav__brand" aria-label="AppSales Labs · Tagesplan-Briefing">
         <b>AppSales</b>
         <span className="lnav__sep">/</span>
@@ -25,13 +26,14 @@ export function SiteHeader({ tone = "dark", cta }: Props) {
         <span className="lnav__tool">Tagesplan</span>
       </Link>
 
-      <nav className="lnav__links">
+      <nav className="lnav__links" aria-label={dict.nav.labs}>
         <Link href="https://labs.appsales-consulting.de" className="lnav__hide-sm">
-          Labs
+          {dict.nav.labs}
         </Link>
         <Link href="/about" className="lnav__hide-sm">
-          So funktioniert&apos;s
+          {dict.nav.how}
         </Link>
+        <LangToggle locale={locale} />
         {cta && (
           <Link
             href={cta.href}

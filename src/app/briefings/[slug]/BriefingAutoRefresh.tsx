@@ -14,7 +14,12 @@ import { useRouter } from "next/navigation";
 const MAX_POLLS = 24;
 const POLL_INTERVAL_MS = 5000;
 
-export function BriefingAutoRefresh() {
+interface Props {
+  timeoutLabel: string;
+  timeoutBody: string;
+}
+
+export function BriefingAutoRefresh({ timeoutLabel, timeoutBody }: Props) {
   const router = useRouter();
   const [pollsExceeded, setPollsExceeded] = useState(false);
 
@@ -51,13 +56,9 @@ export function BriefingAutoRefresh() {
             className="font-mono text-[0.72rem] uppercase tracking-[0.1em] mb-2"
             style={{ color: "var(--coral-deep)" }}
           >
-            Dauert laenger als erwartet
+            {timeoutLabel}
           </p>
-          <p className="leading-relaxed">
-            Die Generierung ist noch nicht fertig oder ein Hintergrund-Job ist
-            haengen geblieben. Bitte Seite manuell neu laden — oder schreib uns,
-            wenn es nicht weitergeht.
-          </p>
+          <p className="leading-relaxed">{timeoutBody}</p>
         </div>
       </div>
     );

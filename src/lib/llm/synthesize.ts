@@ -8,7 +8,8 @@ import { z } from "zod";
 import type { CalendarEvent } from "../calendar/ical";
 import type { ResearchBundle } from "../research/research";
 import type { TavilyResult } from "../research/tavily";
-import { BRIEFING_SYSTEM_PROMPT, getAnthropic, hasAnthropic } from "./anthropic";
+import { briefingSystemPrompt, getAnthropic, hasAnthropic } from "./anthropic";
+import type { Locale } from "../i18n";
 import { env } from "../env";
 
 export const meetingBriefSchema = z.object({
@@ -30,21 +31,24 @@ export interface SynthesiseResult {
   isMock: boolean;
 }
 
-const TIME_FMT = new Intl.DateTimeFormat("de-DE", {
-  hour: "2-digit",
-  minute: "2-digit",
-  timeZone: "Europe/Berlin",
-});
+function timeFmt(locale: Locale): Intl.DateTimeFormat {
+  return new Intl.DateTimeFormat(locale === "en" ? "en-GB" : "de-DE", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Europe/Berlin",
+  });
+}
 
 export async function synthesiseMeeting(
   event: CalendarEvent,
   research: ResearchBundle,
+  locale: Locale = "de",
 ): Promise<SynthesiseResult> {
   if (!hasAnthropic()) {
-    return { brief: buildMockBrief(event, research), isMock: true };
+    return { brief: buildMockBrief(event, research, locale), isMock: true };
   }
 
-  const userMessage = buildUserMessage(event, research);
+  const userMessage = buildUserMessage(event, research, locale);
 
   const client = getAnthropic();
 
@@ -59,7 +63,7 @@ export async function synthesiseMeeting(
       {
         model: env.anthropicModel,
         max_tokens: 1500,
-        system: BRIEFING_SYSTEM_PROMPT,
+        system: briefingSystemPrompt(locale),
         messages: [{ role: "user", content: userMessage }],
       },
       { signal: controller.signal },
@@ -85,44 +89,57 @@ export async function synthesiseMeeting(
   if (!validated.success) {
     // eslint-disable-next-line no-console
     console.error("[synthesize] invalid LLM JSON:", validated.error.flatten());
-    return { brief: buildMockBrief(event, research, "LLM-Antwort war kein gueltiges JSON."), isMock: true };
+    const note =
+      locale === "en" ? "LLM response was not valid JSON." : "LLM-Antwort war kein gueltiges JSON.";
+    return { brief: buildMockBrief(event, research, locale, note), isMock: true };
   }
 
   return { brief: scrubSlop(validated.data), isMock: false };
 }
 
-function buildUserMessage(event: CalendarEvent, research: ResearchBundle): string {
-  const start = TIME_FMT.format(event.startsAt);
-  const end = TIME_FMT.format(event.endsAt);
+function buildUserMessage(event: CalendarEvent, research: ResearchBundle, locale: Locale): string {
+  const fmt = timeFmt(locale);
+  const start = fmt.format(event.startsAt);
+  const end = fmt.format(event.endsAt);
   const lines: string[] = [];
+  const en = locale === "en";
 
-  lines.push(`Termin: ${event.summary}`);
-  lines.push(`Zeit: ${start}–${end}`);
-  if (event.location) lines.push(`Ort: ${event.location}`);
-  if (event.description) lines.push(`Beschreibung: ${truncate(event.description, 400)}`);
+  lines.push(`${en ? "Meeting" : "Termin"}: ${event.summary}`);
+  lines.push(`${en ? "Time" : "Zeit"}: ${start}–${end}`);
+  if (event.location) lines.push(`${en ? "Location" : "Ort"}: ${event.location}`);
+  if (event.description)
+    lines.push(`${en ? "Description" : "Beschreibung"}: ${truncate(event.description, 400)}`);
 
-  if (research.hints.companyGuess) lines.push(`Firma (Vermutung): ${research.hints.companyGuess}`);
-  if (research.hints.personGuess) lines.push(`Person (Vermutung): ${research.hints.personGuess}`);
+  if (research.hints.companyGuess)
+    lines.push(`${en ? "Company (guess)" : "Firma (Vermutung)"}: ${research.hints.companyGuess}`);
+  if (research.hints.personGuess)
+    lines.push(`${en ? "Person (guess)" : "Person (Vermutung)"}: ${research.hints.personGuess}`);
   if (research.hints.externalAttendees.length > 0) {
-    lines.push(`Externe Teilnehmer: ${research.hints.externalAttendees.join(", ")}`);
+    lines.push(
+      `${en ? "External attendees" : "Externe Teilnehmer"}: ${research.hints.externalAttendees.join(", ")}`,
+    );
   }
 
   lines.push("");
-  lines.push("RECHERCHE-MATERIAL:");
+  lines.push(en ? "RESEARCH MATERIAL:" : "RECHERCHE-MATERIAL:");
 
   if (research.isMock) {
-    lines.push("(keine Web-Recherche verfuegbar — nutze nur Termin-Daten)");
+    lines.push(
+      en
+        ? "(no web research available — use meeting data only)"
+        : "(keine Web-Recherche verfuegbar — nutze nur Termin-Daten)",
+    );
   } else {
     if (research.companyOverview.length > 0) {
-      lines.push("\n[Firma — Ueberblick]");
+      lines.push(en ? "\n[Company — overview]" : "\n[Firma — Ueberblick]");
       lines.push(formatResults(research.companyOverview));
     }
     if (research.recentNews.length > 0) {
-      lines.push("\n[Firma — News (letzte 90 Tage)]");
+      lines.push(en ? "\n[Company — news (last 90 days)]" : "\n[Firma — News (letzte 90 Tage)]");
       lines.push(formatResults(research.recentNews));
     }
     if (research.personProfile.length > 0) {
-      lines.push("\n[Person — Profil]");
+      lines.push(en ? "\n[Person — profile]" : "\n[Person — Profil]");
       lines.push(formatResults(research.personProfile));
     }
     if (
@@ -130,14 +147,31 @@ function buildUserMessage(event: CalendarEvent, research: ResearchBundle): strin
       research.recentNews.length === 0 &&
       research.personProfile.length === 0
     ) {
-      lines.push("(keine Quellen gefunden)");
+      lines.push(en ? "(no sources found)" : "(keine Quellen gefunden)");
     }
   }
 
   lines.push("");
-  lines.push("AUFGABE:");
-  lines.push("Schreib ein JSON-Briefing fuer diesen Termin. Schema:");
-  lines.push(`{
+  if (en) {
+    lines.push("TASK:");
+    lines.push("Write a JSON briefing for this meeting. Schema:");
+    lines.push(`{
+  "headline": "Compact briefing title, max 80 chars",
+  "status": "Where do we stand? (1-2 sentences) — what we know, what we don't",
+  "companyContext": "What is the company? Industry, size, product, location. 2-4 sentences.",
+  "personContext": "Who is the person? Role, background. Only if known, otherwise omit.",
+  "recentNews": ["Point 1 with date if possible", "Point 2"],
+  "talkingPoints": ["3-5 concrete conversation anchors — no platitudes"],
+  "conceptProposal": "Proposal: what could the conversation yield? Where is there a hook? 2-4 sentences. Direct, no salesperson-speak.",
+  "openQuestions": ["What still needs clarifying before the meeting?"],
+  "citations": [{"label": "Source title", "url": "https://..."}]
+}`);
+    lines.push("");
+    lines.push("Respond ONLY with the JSON. No markdown wrapper, no pre-text.");
+  } else {
+    lines.push("AUFGABE:");
+    lines.push("Schreib ein JSON-Briefing fuer diesen Termin. Schema:");
+    lines.push(`{
   "headline": "Kompakter Titel des Briefings, max 80 Zeichen",
   "status": "Wo stehen wir? (1-2 Saetze) — was wissen wir, was nicht",
   "companyContext": "Was ist die Firma? Branche, Groesse, Produkt, Standort. 2-4 Saetze.",
@@ -148,8 +182,9 @@ function buildUserMessage(event: CalendarEvent, research: ResearchBundle): strin
   "openQuestions": ["Was muss noch geklaert werden vor dem Termin?"],
   "citations": [{"label": "Quellen-Titel", "url": "https://..."}]
 }`);
-  lines.push("");
-  lines.push("Antworte AUSSCHLIESSLICH mit dem JSON. Kein Markdown-Wrapper, kein Pre-Text.");
+    lines.push("");
+    lines.push("Antworte AUSSCHLIESSLICH mit dem JSON. Kein Markdown-Wrapper, kein Pre-Text.");
+  }
 
   return lines.join("\n");
 }
@@ -228,27 +263,50 @@ function scrubSlop(brief: MeetingBrief): MeetingBrief {
   };
 }
 
-function buildMockBrief(event: CalendarEvent, research: ResearchBundle, note?: string): MeetingBrief {
+function buildMockBrief(
+  event: CalendarEvent,
+  research: ResearchBundle,
+  locale: Locale,
+  note?: string,
+): MeetingBrief {
+  const en = locale === "en";
   return {
     headline: event.summary,
     status: note
-      ? `Mock-Briefing: ${note}`
-      : "Mock-Briefing: keine LLM- und/oder Recherche-Quellen verfuegbar.",
+      ? `${en ? "Mock briefing" : "Mock-Briefing"}: ${note}`
+      : en
+        ? "Mock briefing: no LLM and/or research sources available."
+        : "Mock-Briefing: keine LLM- und/oder Recherche-Quellen verfuegbar.",
     companyContext: research.hints.companyGuess
-      ? `Firma (Vermutung): ${research.hints.companyGuess}. Sobald Tavily-Key gesetzt ist, fuellt sich dieser Block automatisch.`
-      : "Firma nicht eindeutig — Termin-Titel liefert keinen Domain-Hint und es gibt keine externen Attendees.",
+      ? en
+        ? `Company (guess): ${research.hints.companyGuess}. Once a Tavily key is set, this block fills automatically.`
+        : `Firma (Vermutung): ${research.hints.companyGuess}. Sobald Tavily-Key gesetzt ist, fuellt sich dieser Block automatisch.`
+      : en
+        ? "Company unclear — the meeting title gives no domain hint and there are no external attendees."
+        : "Firma nicht eindeutig — Termin-Titel liefert keinen Domain-Hint und es gibt keine externen Attendees.",
     personContext: research.hints.personGuess
-      ? `Person (Vermutung): ${research.hints.personGuess}.`
+      ? en
+        ? `Person (guess): ${research.hints.personGuess}.`
+        : `Person (Vermutung): ${research.hints.personGuess}.`
       : undefined,
     recentNews: [],
-    talkingPoints: [
-      "Aktuelle Situation der Firma checken",
-      "Wer sitzt im Termin? Rolle und Zustaendigkeit klaeren",
-      "Konkretes Ziel des Gespraechs definieren",
-    ],
-    conceptProposal:
-      "Setze die Anthropic- und Tavily-Keys in .env.local, damit das Tool eine echte Synthese liefert. Im Mock-Modus ist hier nur ein Platzhalter.",
-    openQuestions: ["Worum geht es genau in diesem Termin?"],
+    talkingPoints: en
+      ? [
+          "Check the company's current situation",
+          "Who's in the meeting? Clarify role and responsibility",
+          "Define the concrete goal of the conversation",
+        ]
+      : [
+          "Aktuelle Situation der Firma checken",
+          "Wer sitzt im Termin? Rolle und Zustaendigkeit klaeren",
+          "Konkretes Ziel des Gespraechs definieren",
+        ],
+    conceptProposal: en
+      ? "Set the Anthropic and Tavily keys in .env.local so the tool delivers real synthesis. In mock mode this is just a placeholder."
+      : "Setze die Anthropic- und Tavily-Keys in .env.local, damit das Tool eine echte Synthese liefert. Im Mock-Modus ist hier nur ein Platzhalter.",
+    openQuestions: en
+      ? ["What exactly is this meeting about?"]
+      : ["Worum geht es genau in diesem Termin?"],
     citations: [],
   };
 }

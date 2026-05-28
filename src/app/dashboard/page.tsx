@@ -9,6 +9,8 @@ import { env } from "@/lib/env";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { CONTACT_EMAIL } from "@/lib/constants";
+import { getLocale } from "@/lib/i18n-server";
+import { t } from "@/lib/i18n";
 import { CreateBriefingForm } from "./CreateBriefingForm";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +20,9 @@ interface Props {
 }
 
 export default async function DashboardPage({ searchParams }: Props) {
+  const locale = await getLocale();
+  const dict = t(locale);
+
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user?.email) {
     redirect("/login");
@@ -42,7 +47,7 @@ export default async function DashboardPage({ searchParams }: Props) {
     <>
       <header className="pagehero accent--sand">
         <span className="pagehero__blob" aria-hidden />
-        <SiteHeader cta={{ href: "/api/sign-out", label: "Abmelden" }} />
+        <SiteHeader cta={{ href: "/api/sign-out", label: dict.nav.signOut }} locale={locale} />
 
         <div className="pagehero__in">
           <p className="pagehero__tag">Dein Schreibtisch</p>
@@ -110,7 +115,7 @@ export default async function DashboardPage({ searchParams }: Props) {
         </div>
       </section>
 
-      <SiteFooter />
+      <SiteFooter locale={locale} />
     </>
   );
 }
