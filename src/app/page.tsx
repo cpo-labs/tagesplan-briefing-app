@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { CONTACT_EMAIL } from "@/lib/constants";
 
 export default function LandingPage() {
   return (
@@ -172,7 +173,7 @@ export default function LandingPage() {
           <Link href="/login" className="pill pill--coral pill--arrow">
             Briefing erzeugen
           </Link>
-          <Link href="mailto:c.poral@elunic.com" className="pill pill--ghost-dark">
+          <Link href={`mailto:${CONTACT_EMAIL}`} className="pill pill--ghost-dark">
             Christian schreiben
           </Link>
         </div>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { CONTACT_MAILTO_TAGESPLAN } from "@/lib/constants";
 
 export const metadata = {
   title: "So funktioniert's — Tagesplan-Briefing",
@@ -65,7 +66,7 @@ export default function AboutPage() {
               wird.
             </p>
             <Link
-              href="mailto:c.poral@elunic.com?subject=Tagesplan-Briefing"
+              href={CONTACT_MAILTO_TAGESPLAN}
               className="pill pill--ink pill--arrow mt-6"
             >
               Christian schreiben

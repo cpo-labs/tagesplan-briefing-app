@@ -8,6 +8,7 @@ import { briefings, briefingRuns } from "@/lib/db/schema";
 import { env } from "@/lib/env";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { CONTACT_EMAIL } from "@/lib/constants";
 import { CreateBriefingForm } from "./CreateBriefingForm";
 
 export const dynamic = "force-dynamic";
@@ -114,7 +115,7 @@ function RateLimitedCard() {
         Limit hochsetzen oder ueberlegen, ob daraus eine richtige Loesung wird.
       </p>
       <a
-        href="mailto:c.poral@elunic.com?subject=Tagesplan-Briefing%20%C2%B7%20mehr%20Briefings"
+        href={`mailto:${CONTACT_EMAIL}?subject=Tagesplan-Briefing%20%C2%B7%20mehr%20Briefings`}
         className="pill pill--coral pill--arrow mt-7"
       >
         Christian schreiben

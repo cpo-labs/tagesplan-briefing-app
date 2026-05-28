@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CONTACT_EMAIL } from "@/lib/constants";
 
 export function SiteFooter() {
   return (
@@ -30,7 +31,7 @@ export function SiteFooter() {
           <Link href="https://appsales-consulting.de" className="hover:text-coral transition">
             AppSales
           </Link>
-          <Link href="mailto:c.poral@elunic.com" className="hover:text-coral transition">
+          <Link href={`mailto:${CONTACT_EMAIL}`} className="hover:text-coral transition">
             Kontakt
           </Link>
         </div>

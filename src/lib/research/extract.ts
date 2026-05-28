@@ -36,7 +36,6 @@ const STOPWORDS = new Set([
   "and",
   "und",
   "vs",
-  "and",
   "the",
   "der",
   "die",
