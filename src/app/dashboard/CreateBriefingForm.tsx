@@ -128,7 +128,7 @@ function IcalTab() {
           marginTop: "0.4rem",
         }}
       >
-        Klebe deinen iCal-Link ein.
+        Füge deinen iCal-Link ein.
       </h3>
 
       <div className="field">
@@ -184,8 +184,31 @@ function IcalTab() {
           paddingTop: "0.4rem",
         }}
       >
-        <button type="submit" disabled={isPending} className="pill pill--ink pill--arrow">
-          {isPending ? "Briefing wird erzeugt..." : "Briefing erzeugen"}
+        <button
+          type="submit"
+          disabled={isPending}
+          aria-busy={isPending}
+          className={isPending ? "pill pill--ink" : "pill pill--ink pill--arrow"}
+        >
+          {isPending ? (
+            <span style={{ display: "inline-flex", alignItems: "center", gap: "0.55rem" }}>
+              <span
+                aria-hidden
+                className="animate-spin"
+                style={{
+                  width: "0.9rem",
+                  height: "0.9rem",
+                  borderRadius: "50%",
+                  border: "2px solid currentColor",
+                  borderRightColor: "transparent",
+                  display: "inline-block",
+                }}
+              />
+              Briefing wird erzeugt…
+            </span>
+          ) : (
+            "Briefing erzeugen"
+          )}
         </button>
         <span
           style={{

@@ -187,16 +187,16 @@ const de: Dict = {
     back: "Zurück zu Labs",
   },
   hero: {
-    tag: "Werkzeug · AppSales Labs",
+    tag: "Tagesplan-Briefing",
     titleBefore: "Wach auf, ",
     titleEm: "jeder Termin",
     titleAfter: " ist schon gebrieft.",
-    sub: "Klebe deinen iCal-Link ein und du bekommst ein 1-Pager-Briefing pro Termin: Firma, Person, jüngste News, Talking Points, Konzept-Idee. Kein Login nötig — Recherche von Tavily, Synthese von Claude.",
+    sub: "Füge deinen iCal-Link ein und du bekommst ein 1-Pager-Briefing pro Termin: Firma, Person, jüngste News, Talking Points, Konzept-Idee. Kein Login nötig. Recherche von Tavily, Synthese von Claude.",
     note: "Kostenlos · kalenderbasiert · kein Login für den iCal-Weg",
   },
   form: {
     eyebrow: "Schritt 1 · Kalender verbinden",
-    heading: "Klebe deinen iCal-Link ein.",
+    heading: "Füge deinen iCal-Link ein.",
     icalLabel: "iCal-URL (read-only)",
     icalPlaceholder: "https://calendar.google.com/calendar/ical/.../basic.ics",
     icalHint:
@@ -331,7 +331,7 @@ const de: Dict = {
   bottomCta: {
     eyebrow: "Probier's aus",
     title: "Kalender rein, Tagesplan raus, kein Bullshit.",
-    text: "Klebe deinen iCal-Link ein und erzeuge dein erstes Briefing. Kein Passwort, kein Tracking, keine Newsletter. Mail nur, wenn du das Ergebnis zugeschickt haben willst.",
+    text: "Füge deinen iCal-Link ein und erzeuge dein erstes Briefing. Kein Passwort, kein Tracking, keine Newsletter. Mail nur, wenn du das Ergebnis zugeschickt haben willst.",
     primary: "Tagesplan erzeugen",
     secondary: "Schreib uns",
   },
@@ -427,11 +427,11 @@ const en: Dict = {
     back: "Back to Labs",
   },
   hero: {
-    tag: "Tool · AppSales Labs",
-    titleBefore: "Wake up — ",
+    tag: "Tagesplan-Briefing",
+    titleBefore: "Wake up, ",
     titleEm: "every meeting",
     titleAfter: " is already briefed.",
-    sub: "Paste your iCal link and get a one-pager briefing per meeting: company, person, recent news, talking points, concept idea. No login needed — research by Tavily, synthesis by Claude.",
+    sub: "Paste your iCal link and get a one-pager briefing per meeting: company, person, recent news, talking points, concept idea. No login needed. Research by Tavily, synthesis by Claude.",
     note: "Free · calendar-first · no login for the iCal path",
   },
   form: {

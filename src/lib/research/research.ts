@@ -54,18 +54,14 @@ export async function researchEvent(
     );
   }
 
+  // Person nur MIT Firmen-Kontext recherchieren. Ein nackter Vorname wie
+  // "Christian" liefert sonst Müll (Religions-News statt der Person). Ohne
+  // Firma lassen wir die Person-Recherche bewusst weg.
   if (hints.personGuess && hints.companyGuess) {
     queries.push(
       tavilySearch({
         query: `${hints.personGuess} ${hints.companyGuess} LinkedIn Position`,
         maxResults: 4,
-      }).then((r) => ({ kind: "person" as const, results: r.results, mock: r.mock })),
-    );
-  } else if (hints.personGuess) {
-    queries.push(
-      tavilySearch({
-        query: `${hints.personGuess} LinkedIn`,
-        maxResults: 3,
       }).then((r) => ({ kind: "person" as const, results: r.results, mock: r.mock })),
     );
   }

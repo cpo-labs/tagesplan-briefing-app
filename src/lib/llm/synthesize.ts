@@ -39,6 +39,33 @@ function timeFmt(locale: Locale): Intl.DateTimeFormat {
   });
 }
 
+// Strukturierte Ausgabe per Tool-Use: das Modell MUSS dieses Tool aufrufen.
+// Das SDK liefert ein Objekt — kein fragiles JSON.parse auf LLM-Freitext mehr,
+// also auch kein "kein gueltiges JSON"-Mock-Fallback.
+const BRIEF_TOOL = {
+  name: "emit_meeting_brief",
+  description: "Gibt das fertige Termin-Briefing strukturiert zurück.",
+  input_schema: {
+    type: "object" as const,
+    properties: {
+      headline: { type: "string", description: "Kompakter Titel des Briefings, max 80 Zeichen." },
+      status: { type: "string", description: "Wo stehen wir? 1-2 Sätze: was wissen wir, was nicht." },
+      companyContext: { type: "string", description: "Firma: Branche, Größe, Produkt, Standort. 2-4 Sätze. Leer lassen, wenn keine externe Firma im Spiel ist." },
+      personContext: { type: "string", description: "Person: Rolle, Hintergrund. Nur wenn wirklich bekannt, sonst weglassen." },
+      recentNews: { type: "array", items: { type: "string" }, description: "Relevante News mit Datum, wenn vorhanden. Sonst leer." },
+      talkingPoints: { type: "array", items: { type: "string" }, description: "3-5 konkrete Gesprächsanker, keine Plattitüden." },
+      conceptProposal: { type: "string", description: "Was könnte das Gespräch bringen, wo gibt es eine Andock-Möglichkeit? 2-4 Sätze, direkt, kein Verkäufer-Sprech." },
+      openQuestions: { type: "array", items: { type: "string" }, description: "Was muss vor dem Termin geklärt werden?" },
+      citations: {
+        type: "array",
+        items: { type: "object", properties: { label: { type: "string" }, url: { type: "string" } }, required: ["label", "url"] },
+        description: "Nur Quellen aus dem Recherche-Material oben. Keine erfundenen URLs.",
+      },
+    },
+    required: ["headline", "status", "companyContext", "talkingPoints", "conceptProposal", "openQuestions"],
+  },
+};
+
 export async function synthesiseMeeting(
   event: CalendarEvent,
   research: ResearchBundle,
@@ -64,6 +91,8 @@ export async function synthesiseMeeting(
         model: env.anthropicModel,
         max_tokens: 1500,
         system: briefingSystemPrompt(locale),
+        tools: [BRIEF_TOOL],
+        tool_choice: { type: "tool", name: "emit_meeting_brief" },
         messages: [{ role: "user", content: userMessage }],
       },
       { signal: controller.signal },
@@ -71,7 +100,9 @@ export async function synthesiseMeeting(
   } catch (err) {
     if (controller.signal.aborted) {
       throw new Error(
-        "Die Recherche-Synthese hat zu lange gedauert. Bitte nochmal versuchen.",
+        locale === "en"
+          ? "Research synthesis took too long. Please try again."
+          : "Die Recherche-Synthese hat zu lange gedauert. Bitte nochmal versuchen.",
       );
     }
     throw err;
@@ -79,19 +110,16 @@ export async function synthesiseMeeting(
     clearTimeout(timeout);
   }
 
-  const textBlock = response.content.find((b) => b.type === "text");
-  if (!textBlock || textBlock.type !== "text") {
-    throw new Error("Anthropic-Response enthielt keinen Text-Block.");
+  const toolBlock = response.content.find((b) => b.type === "tool_use");
+  if (!toolBlock || toolBlock.type !== "tool_use") {
+    return { brief: buildMockBrief(event, research, locale), isMock: true };
   }
 
-  const parsed = safeParseJson(textBlock.text);
-  const validated = meetingBriefSchema.safeParse(parsed);
+  const validated = meetingBriefSchema.safeParse(toolBlock.input);
   if (!validated.success) {
     // eslint-disable-next-line no-console
-    console.error("[synthesize] invalid LLM JSON:", validated.error.flatten());
-    const note =
-      locale === "en" ? "LLM response was not valid JSON." : "LLM-Antwort war kein gueltiges JSON.";
-    return { brief: buildMockBrief(event, research, locale, note), isMock: true };
+    console.error("[synthesize] tool input failed schema:", validated.error.flatten());
+    return { brief: buildMockBrief(event, research, locale), isMock: true };
   }
 
   return { brief: scrubSlop(validated.data), isMock: false };
@@ -154,36 +182,14 @@ function buildUserMessage(event: CalendarEvent, research: ResearchBundle, locale
   lines.push("");
   if (en) {
     lines.push("TASK:");
-    lines.push("Write a JSON briefing for this meeting. Schema:");
-    lines.push(`{
-  "headline": "Compact briefing title, max 80 chars",
-  "status": "Where do we stand? (1-2 sentences) — what we know, what we don't",
-  "companyContext": "What is the company? Industry, size, product, location. 2-4 sentences.",
-  "personContext": "Who is the person? Role, background. Only if known, otherwise omit.",
-  "recentNews": ["Point 1 with date if possible", "Point 2"],
-  "talkingPoints": ["3-5 concrete conversation anchors — no platitudes"],
-  "conceptProposal": "Proposal: what could the conversation yield? Where is there a hook? 2-4 sentences. Direct, no salesperson-speak.",
-  "openQuestions": ["What still needs clarifying before the meeting?"],
-  "citations": [{"label": "Source title", "url": "https://..."}]
-}`);
-    lines.push("");
-    lines.push("Respond ONLY with the JSON. No markdown wrapper, no pre-text.");
+    lines.push(
+      "Create the briefing via the emit_meeting_brief tool. Fields concrete and verifiable, no platitudes. Leave companyContext empty if there is no external company. Use only URLs from the research material above as citations, invent none.",
+    );
   } else {
     lines.push("AUFGABE:");
-    lines.push("Schreib ein JSON-Briefing fuer diesen Termin. Schema:");
-    lines.push(`{
-  "headline": "Kompakter Titel des Briefings, max 80 Zeichen",
-  "status": "Wo stehen wir? (1-2 Saetze) — was wissen wir, was nicht",
-  "companyContext": "Was ist die Firma? Branche, Groesse, Produkt, Standort. 2-4 Saetze.",
-  "personContext": "Wer ist die Person? Rolle, Hintergrund. Nur wenn bekannt, sonst weglassen.",
-  "recentNews": ["Stichpunkt 1 mit Datum wenn moeglich", "Stichpunkt 2"],
-  "talkingPoints": ["3-5 konkrete Gespraechsanker — keine Plattituden"],
-  "conceptProposal": "Vorschlag: Was koennte das Gespraech bringen? Wo gibt es eine Andock-Moeglichkeit? 2-4 Saetze. Direkt, kein Verkaeufer-Sprech.",
-  "openQuestions": ["Was muss noch geklaert werden vor dem Termin?"],
-  "citations": [{"label": "Quellen-Titel", "url": "https://..."}]
-}`);
-    lines.push("");
-    lines.push("Antworte AUSSCHLIESSLICH mit dem JSON. Kein Markdown-Wrapper, kein Pre-Text.");
+    lines.push(
+      "Erstelle das Briefing über das Tool emit_meeting_brief. Felder konkret und nachprüfbar, keine Plattitüden. companyContext leer lassen, wenn keine externe Firma im Spiel ist. Nutze als citations nur URLs aus dem Recherche-Material oben, erfinde keine.",
+    );
   }
 
   return lines.join("\n");
@@ -202,30 +208,6 @@ function formatResults(results: TavilyResult[]): string {
 function truncate(s: string, n: number): string {
   if (s.length <= n) return s;
   return s.slice(0, n - 1) + "…";
-}
-
-function safeParseJson(text: string): unknown {
-  // Manchmal verpackt das LLM trotz Anweisung in ```json — wir tolerieren das.
-  const cleaned = text
-    .trim()
-    .replace(/^```(?:json)?\s*/i, "")
-    .replace(/\s*```$/i, "");
-  try {
-    return JSON.parse(cleaned);
-  } catch {
-    // Vielleicht hat das LLM noch Pre-Text geliefert — versuche den
-    // ersten {…}-Block zu fischen.
-    const first = cleaned.indexOf("{");
-    const last = cleaned.lastIndexOf("}");
-    if (first >= 0 && last > first) {
-      try {
-        return JSON.parse(cleaned.slice(first, last + 1));
-      } catch {
-        return null;
-      }
-    }
-    return null;
-  }
 }
 
 /**

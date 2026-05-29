@@ -138,8 +138,9 @@ export async function createBriefing(
     };
   }
 
-  // Free-tier cap: only the first MAX_EVENTS_PER_DAY events get processed.
-  const dayEvents = allDayEvents.slice(0, MAX_EVENTS_PER_DAY);
+  // Dedup zuerst (doppelte Kalender-Eintraege / Serien-Instanzen erzeugen sonst
+  // mehrere Briefings fuer denselben Termin), dann der Free-Tier-Cap.
+  const dayEvents = dedupeEvents(allDayEvents).slice(0, MAX_EVENTS_PER_DAY);
 
   // ─── Persist row in `processing` state ───────────────────────────────
   const id = nanoid();
@@ -293,6 +294,23 @@ async function runPipelineInBackground(
       })
       .where(eq(briefings.id, id));
   }
+}
+
+/**
+ * Entfernt doppelte Termine. Schluessel: uid + Startzeit + (normalisierter)
+ * Titel. Faengt sowohl exakte Duplikate (gleiche uid+Zeit) als auch
+ * identisch betitelte Parallel-Eintraege aus zwei Kalendern ab.
+ */
+function dedupeEvents(events: CalendarEvent[]): CalendarEvent[] {
+  const seen = new Set<string>();
+  const out: CalendarEvent[] = [];
+  for (const e of events) {
+    const key = `${e.uid}|${e.startsAt.toISOString()}|${e.summary.trim().toLowerCase()}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(e);
+  }
+  return out;
 }
 
 function collectCitations(research: ResearchBundle): Array<{ label: string; url: string }> {

@@ -63,7 +63,7 @@ const handler: ProxyHandler<{}> = {
         return optional("RESEND_API_KEY");
       case "resendFrom":
         return (
-          process.env.RESEND_FROM ?? "Tagesplan-Briefing <hello@labs.appsales-consulting.de>"
+          process.env.RESEND_FROM ?? "Tagesplan-Briefing <info@appsales-consulting.de>"
         );
       case "tavilyKey":
         return optional("TAVILY_API_KEY");

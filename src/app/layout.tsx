@@ -6,7 +6,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
   const de = locale === "de";
   return {
-    title: "Tagesplan-Briefing — AppSales Labs",
+    title: "Tagesplan-Briefing",
     description: de
       ? "Kalender rein, Briefing raus. Web-Recherche pro Termin via Tavily und Claude. Lead-Magnet-Tool von AppSales Labs."
       : "Calendar in, briefing out. Per-meeting web research via Tavily and Claude. Lead-magnet tool by AppSales Labs.",
