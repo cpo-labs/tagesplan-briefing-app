@@ -31,7 +31,7 @@ export function CalendarForm({ locale }: Props) {
   ]);
 
   return (
-    <form action={formAction} className="calform" id="calendar-form">
+    <form action={formAction} className="calform">
       <p className="eyebrow">{dict.eyebrow}</p>
       <h2 className="calform__heading">{dict.heading}</h2>
 

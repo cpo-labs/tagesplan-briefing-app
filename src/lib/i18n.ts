@@ -51,6 +51,31 @@ type Dict = {
     a: { cap: string; title: string; copy: string; cta: string };
     b: { cap: string; title: string; copy: string; badge: string; cta: string };
     c: { cap: string; title: string; copy: string; cta: string };
+    /** Strings unique to the new side-by-side card layout. */
+    cards: {
+      recommended: string;
+      onRequest: string;
+      copy: string;
+      copied: string;
+      copyFail: string;
+      a: { vizCap: string; vizSettings: string; vizSecret: string; vizCopy: string };
+      b: {
+        addrLabel: string;
+        steps: string[];
+        vizCap: string;
+        vizFrom: string;
+        vizTo: string;
+        vizInbox: string;
+      };
+      c: {
+        bullets: string[];
+        requestCta: string;
+        vizCap: string;
+        vizGoogle: string;
+        vizTool: string;
+        vizStatus: string;
+      };
+    };
   };
   benefits: {
     eyebrow: string;
@@ -217,6 +242,43 @@ const de: Dict = {
       title: "Mit Google verbinden",
       copy: "OAuth-Login mit Google. Bequemster Weg für Workspace-Nutzer. Wir lesen ausschließlich deine Termine — sonst nichts.",
       cta: "Verbinden",
+    },
+    cards: {
+      recommended: "Empfohlen",
+      onRequest: "Auf Anfrage",
+      copy: "Kopieren",
+      copied: "Kopiert",
+      copyFail: "Manuell kopieren",
+      a: {
+        vizCap: "Kalender-Einstellungen",
+        vizSettings: "Kalender integrieren",
+        vizSecret: "Geheime Adresse im iCal-Format",
+        vizCopy: "Link kopiert",
+      },
+      b: {
+        addrLabel: "Service-Adresse",
+        steps: [
+          "Google-Kalender öffnen › Einstellungen › „Für bestimmte Personen freigeben“.",
+          "Service-Adresse hinzufügen, Berechtigung „Alle Termindetails sehen“.",
+          "Wir verarbeiten den Posteingang regelmäßig — kein Login nötig.",
+        ],
+        vizCap: "Kalender freigeben",
+        vizFrom: "Dein Kalender",
+        vizTo: "briefing@",
+        vizInbox: "Eingeladen",
+      },
+      c: {
+        bullets: [
+          "OAuth-Login mit Google Workspace",
+          "Wir lesen ausschließlich deine Termine",
+          "Kein Schreibzugriff, kein Mail-Zugriff",
+        ],
+        requestCta: "Zugang anfragen",
+        vizCap: "Google verbinden",
+        vizGoogle: "Google Kalender",
+        vizTool: "Tagesplan",
+        vizStatus: "Verbunden",
+      },
     },
   },
   benefits: {
@@ -420,6 +482,43 @@ const en: Dict = {
       title: "Connect with Google",
       copy: "OAuth login with Google. Most convenient for Workspace users. We read only your events — nothing else.",
       cta: "Connect",
+    },
+    cards: {
+      recommended: "Recommended",
+      onRequest: "On request",
+      copy: "Copy",
+      copied: "Copied",
+      copyFail: "Copy manually",
+      a: {
+        vizCap: "Calendar settings",
+        vizSettings: "Integrate calendar",
+        vizSecret: "Secret address in iCal format",
+        vizCopy: "Link copied",
+      },
+      b: {
+        addrLabel: "Service address",
+        steps: [
+          "Open Google Calendar › Settings › “Share with specific people”.",
+          "Add the service address, permission “See all event details”.",
+          "We process the inbox regularly — no login needed.",
+        ],
+        vizCap: "Share calendar",
+        vizFrom: "Your calendar",
+        vizTo: "briefing@",
+        vizInbox: "Invited",
+      },
+      c: {
+        bullets: [
+          "OAuth login with Google Workspace",
+          "We read only your events",
+          "No write access, no mail access",
+        ],
+        requestCta: "Request access",
+        vizCap: "Connect Google",
+        vizGoogle: "Google Calendar",
+        vizTool: "Day-plan",
+        vizStatus: "Connected",
+      },
     },
   },
   benefits: {

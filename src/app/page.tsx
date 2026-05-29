@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
-import { CONTACT_EMAIL, CONTACT_MAILTO_TAGESPLAN } from "@/lib/constants";
+import { CONTACT_MAILTO_TAGESPLAN } from "@/lib/constants";
 import { getLocale } from "@/lib/i18n-server";
 import { t } from "@/lib/i18n";
-import { CalendarForm } from "./_components/calendar-form";
+import { WayIcalCard } from "./_components/way-ical-card";
+import { WayForwardCard } from "./_components/way-forward-card";
+import { WayGoogleCard } from "./_components/way-google-card";
 
 export const dynamic = "force-dynamic";
 // Free-tier: the public briefing action runs the pipeline kickoff + DB writes
@@ -23,30 +25,40 @@ export default async function LandingPage() {
         <SiteHeader cta={{ href: "/login", label: dict.nav.login }} locale={locale} />
 
         <div className="pagehero__in">
-          <p className="pagehero__tag">{dict.hero.tag}</p>
-          <h1 className="pagehero__title">
-            {dict.hero.titleBefore}
-            <em>{dict.hero.titleEm}</em>
-            {dict.hero.titleAfter}
-          </h1>
-          <p className="pagehero__sub">{dict.hero.sub}</p>
+          <div className="grid items-center gap-[clamp(2.5rem,5vw,4.5rem)] lg:grid-cols-[1.08fr_.92fr]">
+            <div>
+              <p className="pagehero__tag">{dict.hero.tag}</p>
+              <h1 className="pagehero__title">
+                {dict.hero.titleBefore}
+                <em>{dict.hero.titleEm}</em>
+                {dict.hero.titleAfter}
+              </h1>
+              <p className="pagehero__sub">{dict.hero.sub}</p>
 
-          <div style={{ marginTop: "2.4rem", maxWidth: "38rem" }}>
-            <CalendarForm locale={locale} />
+              <div className="pagehero__actions">
+                <a href="#calendar-form" className="pill pill--coral pill--arrow">
+                  {dict.ways.a.title}
+                </a>
+                <a href="#how" className="pill pill--ghost-dark">
+                  {dict.nav.how}
+                </a>
+              </div>
+
+              <p className="pagehero__note">{dict.hero.note}</p>
+            </div>
+
+            {/* Briefing-Artefakt — handgebaut, leicht gekippt, kein Stock */}
+            <div className="hero-artifact" aria-hidden>
+              <MockBriefCard
+                cap={dict.benefits.mock.cap}
+                tag={dict.benefits.mock.tag}
+                title={dict.benefits.mock.title}
+                body={dict.benefits.mock.body}
+                pointsLabel={dict.benefits.mock.pointsLabel}
+                points={dict.benefits.mock.points}
+              />
+            </div>
           </div>
-
-          <p
-            style={{
-              marginTop: "1.4rem",
-              fontFamily: "var(--mono)",
-              fontSize: "0.74rem",
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              color: "rgba(250,247,242,0.62)",
-            }}
-          >
-            {dict.hero.note}
-          </p>
         </div>
       </header>
 
@@ -61,62 +73,10 @@ export default async function LandingPage() {
             <p className="toolpage__copy">{dict.ways.intro}</p>
           </div>
 
-          <div className="calsrc-grid">
-            <article className="calsrc accent--petrol">
-              <p className="calsrc__cap">
-                <CapLabel cap={dict.ways.a.cap} />
-              </p>
-              <h3 className="calsrc__title">{dict.ways.a.title}</h3>
-              <p className="calsrc__copy">{dict.ways.a.copy}</p>
-              <Link href="/#calendar-form" className="calsrc__meta">
-                {dict.ways.a.cta}
-              </Link>
-            </article>
-
-            <article className="calsrc accent--sand">
-              <p className="calsrc__cap">
-                <CapLabel cap={dict.ways.b.cap} />
-              </p>
-              <h3 className="calsrc__title">{dict.ways.b.title}</h3>
-              <p className="calsrc__copy">
-                {dict.ways.b.copy.split("briefing@appsales-consulting.com").map((part, i, arr) =>
-                  i < arr.length - 1 ? (
-                    <span key={i}>
-                      {part}
-                      <code
-                        style={{
-                          fontFamily: "var(--mono)",
-                          fontSize: "0.88em",
-                          background: "var(--cream-2)",
-                          padding: "0.06em 0.34em",
-                          borderRadius: "5px",
-                          color: "var(--coral-deep)",
-                        }}
-                      >
-                        briefing@appsales-consulting.com
-                      </code>
-                    </span>
-                  ) : (
-                    <span key={i}>{part}</span>
-                  ),
-                )}
-              </p>
-              <span className="calsrc__badge">{dict.ways.b.badge}</span>
-              <Link href="/about" className="calsrc__meta">
-                {dict.ways.b.cta}
-              </Link>
-            </article>
-
-            <article className="calsrc accent--coral">
-              <p className="calsrc__cap">
-                <CapLabel cap={dict.ways.c.cap} />
-              </p>
-              <h3 className="calsrc__title">{dict.ways.c.title}</h3>
-              <p className="calsrc__copy">{dict.ways.c.copy}</p>
-              <Link href="/login?from=google" className="calsrc__meta">
-                {dict.ways.c.cta}
-              </Link>
-            </article>
+          <div className="calway-grid">
+            <WayIcalCard locale={locale} />
+            <WayForwardCard locale={locale} />
+            <WayGoogleCard locale={locale} />
           </div>
         </div>
       </section>
@@ -277,17 +237,6 @@ export default async function LandingPage() {
 }
 
 /* ─── Helpers ─────────────────────────────────────────────────── */
-
-/** Renders "Variante A" / "Option A" with the trailing letter bolded. */
-function CapLabel({ cap }: { cap: string }) {
-  const idx = cap.lastIndexOf(" ");
-  if (idx < 0) return <>{cap}</>;
-  return (
-    <>
-      {cap.slice(0, idx)} <b>{cap.slice(idx + 1)}</b>
-    </>
-  );
-}
 
 function StepNum({
   num,

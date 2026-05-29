@@ -813,3 +813,598 @@ body {
   font-size: 0.74rem;
   color: #f19e94;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Hero artifact — leicht gekippte Briefing-Vorschau (statt Form im Hero)
+   ═══════════════════════════════════════════════════════════════════════ */
+.hero-artifact {
+  display: none;
+}
+@media (min-width: 1024px) {
+  .hero-artifact {
+    display: block;
+    transform: rotate(2.4deg);
+    transition: transform 0.5s var(--ease);
+  }
+  .hero-artifact:hover {
+    transform: rotate(0deg) translateY(-6px);
+  }
+}
+.pagehero__actions {
+  margin-top: 2.2rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+.pagehero__note {
+  margin-top: 1.4rem;
+  font-family: var(--mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(250, 247, 242, 0.62);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Calendar-way cards — drei volle Karten nebeneinander (BVP-Source-Card-Stil)
+   ═══════════════════════════════════════════════════════════════════════ */
+.calway-grid {
+  display: grid;
+  gap: clamp(1.4rem, 2vw, 2rem);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  align-items: start;
+}
+.calway {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1.5px solid rgba(24, 20, 16, 0.12);
+  border-radius: var(--rl);
+  padding: 1.8rem 1.8rem 2rem;
+  text-align: left;
+  transition: transform 0.3s var(--ease), border-color 0.25s var(--ease),
+    box-shadow 0.3s var(--ease);
+}
+.calway:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent, var(--coral));
+  box-shadow: 0 26px 54px -30px rgba(24, 20, 16, 0.35);
+}
+.calway--primary {
+  border-color: var(--accent, var(--petrol));
+  box-shadow: 0 22px 48px -30px
+    color-mix(in oklab, var(--accent, var(--petrol)) 60%, rgba(24, 20, 16, 0.5));
+}
+.calway--primary:hover {
+  box-shadow: 0 30px 60px -30px
+    color-mix(in oklab, var(--accent, var(--petrol)) 55%, rgba(24, 20, 16, 0.5));
+}
+.calway__badge {
+  position: absolute;
+  top: 1.2rem;
+  right: 1.2rem;
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: var(--accent, var(--petrol));
+  border-radius: 100px;
+  padding: 0.28rem 0.62rem;
+  font-weight: 700;
+}
+.calway__soon {
+  position: absolute;
+  top: 1.2rem;
+  right: 1.2rem;
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--soft);
+  border: 1.3px solid rgba(24, 20, 16, 0.18);
+  border-radius: 100px;
+  padding: 0.26rem 0.56rem;
+}
+.calway__cap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--soft);
+  margin-bottom: 0.5rem;
+}
+.calway__cap b {
+  font-weight: 700;
+  color: var(--accent, var(--coral));
+}
+.calway__cap::before {
+  content: "";
+  width: 0.62rem;
+  height: 0.62rem;
+  border-radius: 4px;
+  background: var(--accent, var(--coral));
+  flex: none;
+}
+.calway__title {
+  font-family: var(--font);
+  font-weight: 700;
+  font-size: 1.4rem;
+  letter-spacing: -0.015em;
+  line-height: 1.16;
+  margin-bottom: 0.55rem;
+  color: var(--ink);
+}
+.calway__copy {
+  font-size: 0.94rem;
+  line-height: 1.55;
+  color: var(--soft);
+  margin: 0 0 1.3rem;
+}
+.calway__body {
+  margin-top: 0.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+/* die eingebettete Form trägt im Karten-Kontext keinen eigenen Rahmen/Schatten */
+.calway__body .calform {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  gap: 1.1rem;
+}
+.calway__body .calform .eyebrow,
+.calway__body .calform .calform__heading {
+  display: none;
+}
+
+/* Card B — Service-Adresse + Schritte */
+.calway__addr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  background: var(--cream-2);
+  border: 1.5px solid rgba(24, 20, 16, 0.1);
+  border-radius: 14px;
+  padding: 0.85rem 0.95rem;
+}
+.calway__addr-text {
+  min-width: 0;
+  flex: 1;
+}
+.calway__addr-mono {
+  font-family: var(--mono);
+  font-size: 0.86rem;
+  font-weight: 500;
+  color: var(--coral-deep);
+  word-break: break-all;
+  margin-top: 0.3rem;
+}
+.calway__copybtn {
+  flex: none;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent, var(--sand));
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.calway__copybtn:hover {
+  color: var(--ink);
+}
+.calway__steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--soft);
+}
+.calway__steps li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+.calway__steps-num {
+  font-family: var(--mono);
+  color: var(--accent, var(--sand));
+  flex: none;
+}
+.calway__softbadge {
+  align-self: flex-start;
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent, var(--sand));
+  background: color-mix(in oklab, var(--accent, var(--sand)) 14%, transparent);
+  border-radius: 100px;
+  padding: 0.26rem 0.7rem;
+}
+
+/* Card C — Bullets + Anfrage-CTA */
+.calway__bullets {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--soft);
+}
+.calway__bullets li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+.calway__tick {
+  color: var(--accent, var(--coral));
+  flex: none;
+  font-weight: 700;
+}
+.calway__cta {
+  align-self: flex-start;
+  margin-top: 0.2rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Hand-built animated visuals (.calviz) — Labs-.nviz-Technik, on-brand,
+   nur transform/opacity, idle-Micro-Animation + Hover-Reaktion
+   ═══════════════════════════════════════════════════════════════════════ */
+.calviz {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  margin-bottom: 1.4rem;
+  aspect-ratio: 16 / 7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 1.1rem;
+  background: radial-gradient(
+    125% 120% at 78% 14%,
+    color-mix(in oklab, var(--accent, var(--coral)) 32%, #241d17) 0%,
+    #1b1611 66%
+  );
+}
+.calviz::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: linear-gradient(rgba(250, 247, 242, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(250, 247, 242, 0.06) 1px, transparent 1px);
+  background-size: 26px 26px;
+  -webkit-mask-image: radial-gradient(115% 105% at 72% 26%, #000, transparent 82%);
+          mask-image: radial-gradient(115% 105% at 72% 26%, #000, transparent 82%);
+}
+.calviz__orb {
+  position: absolute;
+  top: -1.4rem;
+  right: -1.2rem;
+  width: 6rem;
+  height: 6rem;
+  border-radius: 46% 54% 62% 38% / 52% 44% 56% 48%;
+  background: var(--accent, var(--coral));
+  opacity: 0.45;
+  filter: blur(7px);
+  animation: calviz-orb 16s var(--ease) infinite alternate;
+}
+@keyframes calviz-orb {
+  to {
+    transform: translate(-14%, 16%) scale(1.18);
+  }
+}
+
+/* — Card A visual: Kalender-Settings-Panel mit geheimer iCal-Zeile — */
+.calviz__panel {
+  position: relative;
+  z-index: 1;
+  width: 92%;
+  background: linear-gradient(158deg, #443c34 0%, #2f2720 52%, #221b15 100%);
+  border: 1.5px solid rgba(250, 247, 242, 0.22);
+  border-radius: 13px;
+  box-shadow: 0 24px 46px -22px rgba(0, 0, 0, 0.85),
+    inset 0 1px 0 rgba(250, 247, 242, 0.08);
+  padding: 0.75rem 0.85rem 0.85rem;
+  transform: rotate(-2deg);
+  transition: transform 0.4s var(--ease);
+}
+.calway:hover .calviz__panel {
+  transform: rotate(0deg);
+}
+.calviz__cap {
+  font-family: var(--mono);
+  font-size: 0.54rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(250, 247, 242, 0.55);
+  display: flex;
+  align-items: center;
+  gap: 0.42rem;
+  margin-bottom: 0.6rem;
+}
+.calviz__dot {
+  width: 0.56rem;
+  height: 0.56rem;
+  border-radius: 3px;
+  background: var(--accent, var(--petrol));
+  flex: none;
+  animation: calviz-blink 2.8s ease-in-out infinite;
+}
+@keyframes calviz-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+.calviz__line {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.62rem;
+  color: rgba(250, 247, 242, 0.82);
+  padding: 0.32rem 0.4rem;
+  border-radius: 7px;
+  margin-bottom: 0.18rem;
+}
+.calviz__ico {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 3px;
+  background: rgba(250, 247, 242, 0.22);
+  flex: none;
+}
+.calviz__ico--key {
+  background: var(--accent, var(--petrol));
+}
+.calviz__txt {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.calviz__txt--mute {
+  color: rgba(250, 247, 242, 0.5);
+}
+/* idle: geheime Zeile pulst sanft; hover: rastet hervorgehoben ein */
+.calviz__line--secret {
+  background: color-mix(in oklab, var(--accent, var(--petrol)) 16%, transparent);
+  animation: calviz-secret 3.4s ease-in-out infinite;
+}
+@keyframes calviz-secret {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+.calway:hover .calviz__line--secret {
+  animation: none;
+  opacity: 1;
+  background: color-mix(in oklab, var(--accent, var(--petrol)) 34%, transparent);
+}
+.calviz__chip {
+  flex: none;
+  font-family: var(--mono);
+  font-size: 0.5rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: var(--accent, var(--petrol));
+  border-radius: 100px;
+  padding: 0.16rem 0.42rem;
+  /* idle: ausgeblendet/rechts; hover: gleitet rein */
+  opacity: 0;
+  transform: translateX(8px);
+  transition: opacity 0.32s var(--ease), transform 0.32s var(--ease);
+}
+.calway:hover .calviz__chip {
+  opacity: 1;
+  transform: translateX(0);
+}
+.calviz__url {
+  display: flex;
+  gap: 0.3rem;
+  margin-top: 0.5rem;
+  padding: 0 0.4rem;
+}
+.calviz__url i {
+  height: 0.4rem;
+  border-radius: 100px;
+  background: rgba(250, 247, 242, 0.16);
+  flex: 1;
+}
+.calviz__url i:nth-child(2) { flex: 0.6; }
+.calviz__url i:nth-child(3) { flex: 0.3; }
+
+/* — Card B visual: Kalender-Kachel → Invite-Paket → Service-Posteingang — */
+.calviz__flow {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.calviz__node {
+  position: relative;
+  background: linear-gradient(158deg, #443c34, #221b15);
+  border: 1.5px solid rgba(250, 247, 242, 0.22);
+  border-radius: 11px;
+  padding: 0.5rem 0.55rem;
+  box-shadow: 0 16px 32px -20px rgba(0, 0, 0, 0.8);
+}
+.calviz__nodecap {
+  display: block;
+  font-family: var(--mono);
+  font-size: 0.5rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(250, 247, 242, 0.55);
+  margin-bottom: 0.4rem;
+}
+.calviz__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.18rem;
+}
+.calviz__grid i {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 2px;
+  background: rgba(250, 247, 242, 0.2);
+}
+.calviz__grid i:nth-child(3) {
+  background: var(--accent, var(--sand));
+}
+.calviz__wire {
+  position: relative;
+  flex: 1;
+  height: 2px;
+  margin: 0 0.1rem;
+  background: rgba(250, 247, 242, 0.18);
+  border-radius: 100px;
+}
+.calviz__packet {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 0.7rem;
+  height: 0.7rem;
+  margin-top: -0.35rem;
+  border-radius: 3px;
+  background: var(--accent, var(--sand));
+  box-shadow: 0 0 8px color-mix(in oklab, var(--accent, var(--sand)) 70%, transparent);
+  /* idle: gemütliche Wanderung; hover: schneller */
+  animation: calviz-packet 3.2s var(--ease) infinite;
+}
+@keyframes calviz-packet {
+  0% { transform: translateX(0); opacity: 0; }
+  12% { opacity: 1; }
+  88% { opacity: 1; }
+  100% { transform: translateX(calc(100% - 0.7rem)); opacity: 0; }
+}
+.calway:hover .calviz__packet {
+  animation-duration: 1.3s;
+}
+.calviz__inboxbar {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 0.5rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: var(--accent, var(--sand));
+  border-radius: 100px;
+  padding: 0.2rem 0.5rem;
+  /* idle: blasse "leer"-Andeutung; hover: voll eingeladen */
+  opacity: 0.55;
+  transition: opacity 0.3s var(--ease);
+}
+.calway:hover .calviz__inboxbar {
+  opacity: 1;
+}
+
+/* — Card C visual: Google-Node ⟷ Tool-Node, sich zeichnende Verbindung — */
+.calviz__connect {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+}
+.calviz__token {
+  font-family: var(--mono);
+  font-size: 0.56rem;
+  letter-spacing: 0.04em;
+  color: var(--cream);
+  background: linear-gradient(158deg, #443c34, #221b15);
+  border: 1.5px solid rgba(250, 247, 242, 0.22);
+  border-radius: 9px;
+  padding: 0.45rem 0.6rem;
+  box-shadow: 0 16px 32px -20px rgba(0, 0, 0, 0.8);
+  white-space: nowrap;
+}
+.calviz__token--t {
+  border-color: color-mix(in oklab, var(--accent, var(--coral)) 60%, transparent);
+}
+.calviz__link {
+  position: relative;
+  width: 2.6rem;
+  height: 2px;
+  background: rgba(250, 247, 242, 0.16);
+  border-radius: 100px;
+  overflow: hidden;
+}
+.calviz__link i {
+  position: absolute;
+  inset: 0;
+  background: var(--accent, var(--coral));
+  transform-origin: left center;
+  /* idle: Verbindung zeichnet sich rhythmisch; hover: dauerhaft voll */
+  transform: scaleX(0.15);
+  animation: calviz-link 2.6s var(--ease) infinite alternate;
+}
+@keyframes calviz-link {
+  from { transform: scaleX(0.15); }
+  to { transform: scaleX(1); }
+}
+.calway:hover .calviz__link i {
+  animation: none;
+  transform: scaleX(1);
+}
+.calviz__status {
+  position: absolute;
+  right: 0;
+  bottom: -1.4rem;
+  font-family: var(--mono);
+  font-size: 0.5rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: var(--accent, var(--coral));
+  border-radius: 100px;
+  padding: 0.18rem 0.46rem;
+  /* idle: versteckt; hover: schnappt ein */
+  opacity: 0;
+  transform: translateY(6px) scale(0.9);
+  transition: opacity 0.3s var(--ease), transform 0.3s var(--ease);
+}
+.calway:hover .calviz__status {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* ── Reduced motion: keine idle-Drift, keine Hover-Choreo — statisch sichtbar ── */
+@media (prefers-reduced-motion: reduce) {
+  .calviz__orb,
+  .calviz__dot,
+  .calviz__line--secret,
+  .calviz__packet,
+  .calviz__link i {
+    animation: none !important;
+  }
+  .calviz__chip,
+  .calviz__status {
+    opacity: 1;
+    transform: none;
+  }
+  .calviz__inboxbar { opacity: 1; }
+  .calviz__link i { transform: scaleX(1); }
+  .calviz__packet { opacity: 1; transform: translateX(40%); }
+  .hero-artifact,
+  .hero-artifact:hover { transform: none; }
+  .calviz__panel,
+  .calway:hover .calviz__panel { transform: none; }
+}
