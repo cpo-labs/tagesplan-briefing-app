@@ -226,21 +226,21 @@ const de: Dict = {
       "Der iCal-Link ist am schnellsten und braucht keinen Login. Service-Mail ist am sichersten, Google-OAuth am bequemsten. Alle drei landen am selben Briefing.",
     a: {
       cap: "Variante A",
-      title: "iCal-URL einkleben",
-      copy: "Google, Apple, Outlook — alle können eine geheime, read-only iCal-Adresse exportieren. Schnellster Weg, ohne Login.",
+      title: "iCal-URL einfügen",
+      copy: "Google, Apple, Outlook, alle können eine geheime, read-only iCal-Adresse exportieren. Schnellster Weg, ohne Login.",
       cta: "Zum Formular",
     },
     b: {
       cap: "Variante B",
       title: "Service-Mail einladen",
-      copy: "Du teilst deinen Google-Kalender read-only mit briefing@appsales-consulting.com. Wir verarbeiten den Posteingang regelmäßig — kein Login nötig.",
-      badge: "Wir verarbeiten regelmäßig",
+      copy: "Du teilst deinen Google-Kalender read-only mit briefing@appsales-consulting.com. Wir holen die Termine automatisch ab, ganz ohne Login.",
+      badge: "Automatisch, ohne Login",
       cta: "Anleitung sehen",
     },
     c: {
       cap: "Variante C",
       title: "Mit Google verbinden",
-      copy: "OAuth-Login mit Google. Bequemster Weg für Workspace-Nutzer. Wir lesen ausschließlich deine Termine — sonst nichts.",
+      copy: "OAuth-Login mit Google. Bequemster Weg für Workspace-Nutzer. Wir lesen ausschließlich deine Termine, sonst nichts.",
       cta: "Verbinden",
     },
     cards: {
@@ -260,7 +260,7 @@ const de: Dict = {
         steps: [
           "Google-Kalender öffnen › Einstellungen › „Für bestimmte Personen freigeben“.",
           "Service-Adresse hinzufügen, Berechtigung „Alle Termindetails sehen“.",
-          "Wir verarbeiten den Posteingang regelmäßig — kein Login nötig.",
+          "Wir holen die Termine automatisch ab, ganz ohne Login.",
         ],
         vizCap: "Kalender freigeben",
         vizFrom: "Dein Kalender",
@@ -467,20 +467,20 @@ const en: Dict = {
     a: {
       cap: "Option A",
       title: "Paste an iCal URL",
-      copy: "Google, Apple, Outlook — all can export a secret, read-only iCal address. Fastest way, no login.",
+      copy: "Google, Apple, Outlook, all can export a secret, read-only iCal address. Fastest way, no login.",
       cta: "Go to form",
     },
     b: {
       cap: "Option B",
       title: "Invite the service mail",
-      copy: "Share your Google calendar read-only with briefing@appsales-consulting.com. We process the inbox regularly — no login needed.",
-      badge: "We process regularly",
+      copy: "Share your Google calendar read-only with briefing@appsales-consulting.com. We fetch your events automatically, no login needed.",
+      badge: "Automatic, no login",
       cta: "See instructions",
     },
     c: {
       cap: "Option C",
       title: "Connect with Google",
-      copy: "OAuth login with Google. Most convenient for Workspace users. We read only your events — nothing else.",
+      copy: "OAuth login with Google. Most convenient for Workspace users. We read only your events, nothing else.",
       cta: "Connect",
     },
     cards: {
@@ -500,7 +500,7 @@ const en: Dict = {
         steps: [
           "Open Google Calendar › Settings › “Share with specific people”.",
           "Add the service address, permission “See all event details”.",
-          "We process the inbox regularly — no login needed.",
+          "We fetch your events automatically, no login needed.",
         ],
         vizCap: "Share calendar",
         vizFrom: "Your calendar",

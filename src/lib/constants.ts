@@ -13,7 +13,7 @@
  * address via Vercel.
  */
 export const CONTACT_EMAIL =
-  process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "hello@appsales-consulting.de";
+  process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "info@appsales-consulting.de";
 
 /** Mit Subject vorgespannte mailto-Helfer fuer Lab-Tool-CTAs. */
 export const CONTACT_MAILTO_TAGESPLAN = `mailto:${CONTACT_EMAIL}?subject=Tagesplan-Briefing`;
