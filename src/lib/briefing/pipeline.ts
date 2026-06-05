@@ -27,7 +27,7 @@ import { meetingBriefSchema, synthesiseMeeting } from "../llm/synthesize";
  * 60s budget. The hero form date-picker keeps days realistic, but a busy
  * calendar with 15 meetings would otherwise blow the timeout.
  */
-const MAX_EVENTS_PER_DAY = 8;
+const MAX_EVENTS_PER_DAY = 6;
 
 const meetingHintsSchema = z.object({
   companyGuess: z.string().optional(),
@@ -210,6 +210,33 @@ async function runPipelineInBackground(
     // string is a safe no-op for anonymous runs.
     const researchEmail = input.userEmail ?? "";
 
+    // Teil-Ergebnisse retten: nach jedem fertigen Termin schreiben wir den
+    // bisherigen Stand in die DB (Status bleibt `processing`). Reisst die
+    // Vercel-Funktion am 60s-Cap ab, bleibt KEIN leerer `processing`-Datensatz
+    // zurueck, sondern ein lesbarer Teil-Tagesplan. Der finale Block setzt
+    // dann auf `ready`.
+    const flushPartial = async (): Promise<void> => {
+      const done = meetings.filter(Boolean);
+      if (done.length === 0) return;
+      const partial: BriefingPayload = {
+        date: input.date,
+        generatedAt: new Date().toISOString(),
+        source: { kind: "ical-url", url: input.icalUrl },
+        meetings: done,
+        isMock: isAnyMock,
+      };
+      try {
+        await db
+          .update(briefings)
+          .set({ payload: JSON.stringify(partial), updatedAt: new Date() })
+          .where(eq(briefings.id, id));
+      } catch (err) {
+        // Ein fehlgeschlagener Zwischen-Flush darf den Lauf nicht killen.
+        // eslint-disable-next-line no-console
+        console.error("[pipeline] partial flush failed:", err);
+      }
+    };
+
     const worker = async () => {
       while (cursor < events.length) {
         const i = cursor++;
@@ -230,6 +257,7 @@ async function runPipelineInBackground(
             brief: synth.brief,
             citationsExtra: collectCitations(research),
           };
+          await flushPartial();
         } catch (err) {
           // eslint-disable-next-line no-console
           console.error(`[pipeline] event ${event.uid} failed:`, err);
@@ -245,17 +273,23 @@ async function runPipelineInBackground(
             brief: {
               headline: event.summary,
               status: en
-                ? `Research for this meeting failed: ${err instanceof Error ? err.message : "unknown"}`
-                : `Recherche fuer diesen Termin fehlgeschlagen: ${err instanceof Error ? err.message : "unbekannt"}`,
+                ? "We couldn't finish researching this meeting. The rest of your day plan is still here."
+                : "Wir konnten die Recherche fuer diesen Termin nicht abschliessen. Der Rest deines Tagesplans ist trotzdem da.",
               companyContext: "",
               recentNews: [],
               talkingPoints: [],
               conceptProposal: "",
               openQuestions: [],
               citations: [],
+              gaps: [
+                en
+                  ? `Research for this meeting failed: ${err instanceof Error ? err.message : "unknown"}`
+                  : `Recherche fuer diesen Termin fehlgeschlagen: ${err instanceof Error ? err.message : "unbekannt"}`,
+              ],
             },
             citationsExtra: [],
           };
+          await flushPartial();
         }
       }
     };

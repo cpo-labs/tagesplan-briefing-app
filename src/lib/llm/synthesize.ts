@@ -190,8 +190,11 @@ async function callBrief(
 /** Fuegt research-Luecken in den Brief ein, dedupliziert gegen bereits genannte. */
 function mergeGaps(brief: MeetingBrief, researchGaps: string[]): MeetingBrief {
   if (researchGaps.length === 0) return brief;
-  const existing = new Set(brief.gaps.map((g) => g.trim().toLowerCase()));
-  const extra = researchGaps.filter((g) => !existing.has(g.trim().toLowerCase()));
+  // Normalisierung: Trailing-Satzzeichen + Whitespace egal, damit
+  // "...(HTTP 429)" und "...(HTTP 429)." als dieselbe Luecke gelten.
+  const norm = (g: string): string => g.trim().toLowerCase().replace(/[.!?]+$/, "");
+  const existing = new Set(brief.gaps.map(norm));
+  const extra = researchGaps.filter((g) => !existing.has(norm(g)));
   if (extra.length === 0) return brief;
   return { ...brief, gaps: [...brief.gaps, ...extra] };
 }

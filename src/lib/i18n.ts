@@ -20,6 +20,7 @@ type Dict = {
     titleAfter: string;
     sub: string;
     note: string;
+    demoCta: string;
   };
   form: {
     eyebrow: string;
@@ -33,13 +34,6 @@ type Dict = {
     emailLabel: string;
     emailHint: string;
     emailPlaceholder: string;
-    advancedToggle: string;
-    crmLabel: string;
-    crmPlaceholder: string;
-    crmHint: string;
-    contactMailLabel: string;
-    contactMailPlaceholder: string;
-    contactMailHint: string;
     submit: string;
     submitPending: string;
     timeNote: string;
@@ -130,7 +124,13 @@ type Dict = {
     blockTalkingPoints: string;
     blockNews: string;
     blockQuestions: string;
+    blockGaps: string;
     blockSources: string;
+    partialLabel: string;
+    demoTag: string;
+    demoNote: string;
+    demoCtaTitle: string;
+    demoCtaButton: string;
     sendTitle: string;
     sendText: string;
     sendButton: string;
@@ -141,6 +141,10 @@ type Dict = {
     leadTitle: string;
     leadText: string;
     leadMore: string;
+    privacyNote: (days: number) => string;
+    expiredTag: string;
+    expiredTitle: string;
+    expiredBody: (days: number) => string;
   };
   login: {
     tag: string;
@@ -191,8 +195,9 @@ const de: Dict = {
     titleBefore: "Wach auf, ",
     titleEm: "jeder Termin",
     titleAfter: " ist schon gebrieft.",
-    sub: "Füge deinen iCal-Link ein und du bekommst ein 1-Pager-Briefing pro Termin: Firma, Person, jüngste News, Talking Points, Konzept-Idee. Kein Login nötig. Recherche von Tavily, Synthese von Claude.",
+    sub: "Füge deinen iCal-Link ein und du bekommst ein 1-Pager-Briefing pro Termin: Firma, Person, jüngste News, Talking Points, Konzept-Idee. Kein Login nötig. Web-Recherche und KI-Synthese pro Termin.",
     note: "Kostenlos · kalenderbasiert · kein Login für den iCal-Weg",
+    demoCta: "Beispiel ansehen",
   },
   form: {
     eyebrow: "Schritt 1 · Kalender verbinden",
@@ -208,13 +213,6 @@ const de: Dict = {
     emailHint:
       "Nur für die Zustellung des Permalinks. Kein Newsletter, kein Tracking. Ohne Mail landest du direkt auf der Briefing-Seite.",
     emailPlaceholder: "du@firma.de",
-    advancedToggle: "Optionale Felder (CRM, Kontakt-Mail)",
-    crmLabel: "CRM-API-Key (optional)",
-    crmPlaceholder: "z. B. HubSpot Private App Token",
-    crmHint: "Wird nur gespeichert, noch nicht angebunden. Für eine spätere Integration.",
-    contactMailLabel: "Kontakt-Mail pro Termin (optional)",
-    contactMailPlaceholder: "kontakt@kunde.de",
-    contactMailHint: "Falls du pro Termin einen festen Ansprechpartner hinterlegen willst.",
     submit: "Tagesplan erzeugen",
     submitPending: "Tagesplan wird erzeugt…",
     timeNote: "~15-30s pro Termin",
@@ -358,7 +356,7 @@ const de: Dict = {
     summaryMany: (n) =>
       `${n} Termine am Tag, jeder mit eigener Karte. Scrollen, oben durchklicken oder Permalink teilen.`,
     createdAt: (stamp) => `Erstellt ${stamp}`,
-    mockNote: "Teilweise Mock-Modus",
+    mockNote: "Demo ohne Recherche",
     jumpTo: "Sprung zu Termin",
     blockStatus: "Wo stehen wir",
     blockCompany: "Firma",
@@ -367,7 +365,13 @@ const de: Dict = {
     blockTalkingPoints: "Talking Points",
     blockNews: "Jüngste News",
     blockQuestions: "Offene Fragen",
+    blockGaps: "Recherche-Luecken",
     blockSources: "Quellen",
+    partialLabel: "Schon fertig",
+    demoTag: "Beispiel-Tagesplan",
+    demoNote: "Das ist ein erfundener Beispiel-Tag mit Platzhalter-Firmen. Dein echter Tagesplan entsteht aus deinem Kalender.",
+    demoCtaTitle: "So sieht dein Tag aus, sobald dein Kalender drin ist.",
+    demoCtaButton: "Eigenen Tagesplan erzeugen",
     sendTitle: "Tagesplan per Mail",
     sendText: "Schick dir den Permalink zu, damit du ihn unterwegs parat hast.",
     sendButton: "Mail mir den Tagesplan",
@@ -379,6 +383,12 @@ const de: Dict = {
     leadText:
       "Wir können dein Limit hochsetzen, das Tool an dein Setup anpassen, oder überlegen, ob daraus eine richtige Lösung wird. Lab-Tools sind ein Lead-Magnet, kein SaaS.",
     leadMore: "Mehr aus den Labs",
+    privacyNote: (days) =>
+      `Dieser Link zeigt deine Termindaten. Teile ihn nur bewusst. Er läuft nach ${days} Tagen automatisch ab.`,
+    expiredTag: "Link abgelaufen",
+    expiredTitle: "Dieses Briefing ist abgelaufen",
+    expiredBody: (days) =>
+      `Briefing-Links laufen aus Datenschutzgründen nach ${days} Tagen ab. Die Termindaten sind nicht mehr abrufbar. Erzeuge einfach einen neuen Tagesplan aus deinem Kalender.`,
   },
   login: {
     tag: "Login per Magic Link",
@@ -431,8 +441,9 @@ const en: Dict = {
     titleBefore: "Wake up, ",
     titleEm: "every meeting",
     titleAfter: " is already briefed.",
-    sub: "Paste your iCal link and get a one-pager briefing per meeting: company, person, recent news, talking points, concept idea. No login needed. Research by Tavily, synthesis by Claude.",
+    sub: "Paste your iCal link and get a one-pager briefing per meeting: company, person, recent news, talking points, concept idea. No login needed. Web research and AI synthesis per meeting.",
     note: "Free · calendar-first · no login for the iCal path",
+    demoCta: "See an example",
   },
   form: {
     eyebrow: "Step 1 · Connect calendar",
@@ -448,13 +459,6 @@ const en: Dict = {
     emailHint:
       "Only for delivering the permalink. No newsletter, no tracking. Without an email you land straight on the briefing page.",
     emailPlaceholder: "you@company.com",
-    advancedToggle: "Optional fields (CRM, contact mail)",
-    crmLabel: "CRM API key (optional)",
-    crmPlaceholder: "e.g. HubSpot Private App token",
-    crmHint: "Stored only, not connected yet. For a later integration.",
-    contactMailLabel: "Contact mail per meeting (optional)",
-    contactMailPlaceholder: "contact@client.com",
-    contactMailHint: "If you want a fixed point of contact stored per meeting.",
     submit: "Generate day-plan",
     submitPending: "Generating day-plan…",
     timeNote: "~15-30s per meeting",
@@ -597,7 +601,7 @@ const en: Dict = {
     summaryMany: (n) =>
       `${n} meetings today, each with its own card. Scroll, jump from the top, or share the permalink.`,
     createdAt: (stamp) => `Created ${stamp}`,
-    mockNote: "Partial mock mode",
+    mockNote: "Demo without research",
     jumpTo: "Jump to meeting",
     blockStatus: "Where we stand",
     blockCompany: "Company",
@@ -606,7 +610,13 @@ const en: Dict = {
     blockTalkingPoints: "Talking points",
     blockNews: "Recent news",
     blockQuestions: "Open questions",
+    blockGaps: "Research gaps",
     blockSources: "Sources",
+    partialLabel: "Already done",
+    demoTag: "Example day-plan",
+    demoNote: "This is an invented example day with placeholder companies. Your real day-plan is built from your calendar.",
+    demoCtaTitle: "This is what your day looks like once your calendar is in.",
+    demoCtaButton: "Generate my own day-plan",
     sendTitle: "Day-plan by email",
     sendText: "Send yourself the permalink so you have it handy on the go.",
     sendButton: "Email me the day-plan",
@@ -618,6 +628,12 @@ const en: Dict = {
     leadText:
       "We can raise your limit, adapt the tool to your setup, or think about whether it should become a real solution. Lab tools are a lead magnet, not a SaaS.",
     leadMore: "More from the Labs",
+    privacyNote: (days) =>
+      `This link shows your meeting data. Only share it deliberately. It expires automatically after ${days} days.`,
+    expiredTag: "Link expired",
+    expiredTitle: "This briefing has expired",
+    expiredBody: (days) =>
+      `For privacy reasons, briefing links expire after ${days} days. The meeting data is no longer available. Just generate a new day-plan from your calendar.`,
   },
   login: {
     tag: "Login via magic link",

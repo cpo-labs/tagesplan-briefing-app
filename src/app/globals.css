@@ -734,29 +734,6 @@ body {
   height: 1px;
   overflow: hidden;
 }
-.calform__advanced-toggle {
-  align-self: flex-start;
-  font-family: var(--mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--soft);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 0.2rem 0;
-  transition: color 0.18s var(--ease);
-}
-.calform__advanced-toggle:hover { color: var(--coral); }
-.calform__advanced-toggle span { color: var(--coral); font-weight: 700; }
-.calform__advanced {
-  display: flex;
-  flex-direction: column;
-  gap: 1.2rem;
-  padding: 1.2rem;
-  border-radius: 14px;
-  background: var(--cream-2);
-}
 .calform__submit-row {
   display: flex;
   flex-wrap: wrap;

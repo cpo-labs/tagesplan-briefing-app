@@ -36,11 +36,11 @@ export default async function LandingPage() {
               <p className="pagehero__sub">{dict.hero.sub}</p>
 
               <div className="pagehero__actions">
-                <a href="#calendar-form" className="pill pill--coral pill--arrow">
+                <Link href="/beispiel" className="pill pill--coral pill--arrow">
+                  {dict.hero.demoCta}
+                </Link>
+                <a href="#calendar-form" className="pill pill--ghost-dark">
                   {dict.ways.a.title}
-                </a>
-                <a href="#how" className="pill pill--ghost-dark">
-                  {dict.nav.how}
                 </a>
               </div>
 

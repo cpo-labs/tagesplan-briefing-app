@@ -17,3 +17,17 @@ export const CONTACT_EMAIL =
 
 /** Mit Subject vorgespannte mailto-Helfer fuer Lab-Tool-CTAs. */
 export const CONTACT_MAILTO_TAGESPLAN = `mailto:${CONTACT_EMAIL}?subject=Tagesplan-Briefing`;
+
+/**
+ * Aufbewahrungsdauer fuer oeffentliche Briefing-Permalinks (in Tagen).
+ *
+ * Permalinks tragen echte Kalender-/Personendaten ohne Login. Sie duerfen
+ * nicht dauerhaft erreichbar bleiben. Wir nutzen `createdAt + TTL` und pruefen
+ * beim Lesen, ob das Briefing abgelaufen ist (On-Read-Check). Ein echter
+ * Cleanup-Cron (Loeschen der Zeile) ist Phase 2 — die On-Read-Pruefung stoppt
+ * die dauerhafte Datenexposition bereits jetzt.
+ */
+export const BRIEFING_TTL_DAYS = 30;
+
+/** Abgeleitete TTL in Millisekunden fuer Date-Vergleiche. */
+export const BRIEFING_TTL_MS = BRIEFING_TTL_DAYS * 24 * 60 * 60 * 1000;

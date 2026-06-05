@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { eq } from "drizzle-orm";
@@ -13,6 +14,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { CONTACT_EMAIL, CONTACT_MAILTO_TAGESPLAN } from "@/lib/constants";
 import { getLocale } from "@/lib/i18n-server";
 import { t, type Locale } from "@/lib/i18n";
+import { isBriefingExpired, BRIEFING_TTL_DAYS } from "@/lib/briefing/retention";
 import { BriefingAutoRefresh } from "./BriefingAutoRefresh";
 import { SendDayPlan } from "./SendDayPlan";
 
@@ -25,6 +27,20 @@ export const dynamic = "force-dynamic";
 // briefing while the background pipeline finishes — keep headroom on free tier.
 export const maxDuration = 60;
 
+// Permalinks tragen echte Kalender-/Personendaten ohne Auth. Sie duerfen NIE
+// in einem Suchindex landen. Neben dem HTTP-Header `X-Robots-Tag` (gesetzt in
+// next.config.ts fuer /briefings/:slug*) setzen wir hier zusaetzlich das
+// <meta name="robots">-Tag — Belt-and-suspenders fuer Crawler, die nur eins
+// der beiden auswerten.
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+    googleBot: { index: false, follow: false },
+  },
+};
+
 export default async function BriefingDetailPage({ params }: Props) {
   const locale = await getLocale();
   const { slug } = await params;
@@ -32,8 +48,28 @@ export default async function BriefingDetailPage({ params }: Props) {
   const briefing = rows[0];
   if (!briefing) notFound();
 
+  // On-Read-Ablaufpruefung: ist der Permalink aelter als die TTL, zeigen wir
+  // eine menschliche "abgelaufen"-Seite statt der echten Termindaten. Das
+  // stoppt die dauerhafte Datenexposition; ein Cleanup-Cron loescht die Zeile
+  // spaeter (Phase 2).
+  if (isBriefingExpired(briefing.createdAt)) {
+    return <ExpiredView locale={locale} />;
+  }
+
   if (briefing.status === "processing") {
-    return <ProcessingView title={briefing.title} locale={locale} />;
+    // Teil-Ergebnisse: ist der Lauf noch unterwegs, aber es liegen schon
+    // fertige Termine vor, zeigen wir sie unter dem "laeuft noch"-Banner.
+    // Reisst der Hintergrund-Lauf ab, bleibt so wenigstens das Geschaffene
+    // sichtbar statt eines leeren Spinners.
+    let partial: BriefingPayload | null = null;
+    if (briefing.payload) {
+      try {
+        partial = briefingPayloadSchema.parse(JSON.parse(briefing.payload));
+      } catch {
+        partial = null;
+      }
+    }
+    return <ProcessingView title={briefing.title} locale={locale} partial={partial} />;
   }
 
   if (briefing.status === "failed") {
@@ -65,8 +101,17 @@ export default async function BriefingDetailPage({ params }: Props) {
 
 /* ─── Views ─────────────────────────────────────────────────────────── */
 
-function ProcessingView({ title, locale }: { title: string; locale: Locale }) {
+function ProcessingView({
+  title,
+  locale,
+  partial,
+}: {
+  title: string;
+  locale: Locale;
+  partial?: BriefingPayload | null;
+}) {
   const dict = t(locale).result;
+  const ready = partial?.meetings ?? [];
   return (
     <>
       <header className="pagehero accent--sand">
@@ -102,6 +147,24 @@ function ProcessingView({ title, locale }: { title: string; locale: Locale }) {
       <section className="toolpage">
         <div className="toolpage__in">
           <p style={{ color: "var(--soft)", maxWidth: "44rem" }}>{dict.processingHint}</p>
+
+          {ready.length > 0 && (
+            <div style={{ marginTop: "clamp(2rem,3.5vw,3rem)" }}>
+              <p className="mono-label">{dict.partialLabel}</p>
+              <div
+                style={{
+                  marginTop: "1.2rem",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "clamp(2rem,3vw,3rem)",
+                }}
+              >
+                {ready.map((m, i) => (
+                  <MeetingBriefCard key={m.uid} meeting={m} index={i} locale={locale} />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </section>
       <SiteFooter locale={locale} />
@@ -154,6 +217,53 @@ function FailedView({
               </Link>
               <Link href={`mailto:${CONTACT_EMAIL}`} className="pill pill--ghost">
                 {dict.writeUs}
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+      <SiteFooter locale={locale} />
+    </>
+  );
+}
+
+function ExpiredView({ locale }: { locale: Locale }) {
+  const dict = t(locale).result;
+  return (
+    <>
+      <header className="pagehero accent--sand">
+        <span className="pagehero__blob" aria-hidden />
+        <SiteHeader locale={locale} />
+        <div className="pagehero__in">
+          <p className="pagehero__tag">{dict.expiredTag}</p>
+          <h1 className="pagehero__title">{dict.expiredTitle}</h1>
+        </div>
+      </header>
+
+      <section className="toolpage">
+        <div className="toolpage__in">
+          <div
+            style={{
+              maxWidth: "48rem",
+              padding: "clamp(1.8rem,3vw,2.4rem)",
+              background: "#fff",
+              border: "1px solid rgba(24,20,16,0.1)",
+              borderRadius: "var(--rl)",
+              boxShadow: "0 18px 40px -28px rgba(24,20,16,0.2)",
+            }}
+          >
+            <p className="mono-label" style={{ color: "var(--soft)" }}>
+              {dict.expiredTag}
+            </p>
+            <p className="mt-3" style={{ color: "var(--ink)", lineHeight: 1.6 }}>
+              {dict.expiredBody(BRIEFING_TTL_DAYS)}
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link href="/#calendar-form" className="pill pill--ink pill--arrow">
+                {dict.demoCtaButton}
+              </Link>
+              <Link href="/" className="pill pill--ghost">
+                {dict.backHome}
               </Link>
             </div>
           </div>
@@ -251,10 +361,29 @@ function ReadyView({
             ))}
           </div>
 
+          {/* Datenschutz-Hinweis: dieser Link traegt echte Termindaten ohne
+              Login. Klar machen, dass er nur bewusst geteilt werden sollte und
+              automatisch ablaeuft. */}
+          <p
+            style={{
+              marginTop: "clamp(2.5rem,4vw,4rem)",
+              padding: "0.9rem 1.1rem",
+              background: "rgba(24,20,16,0.04)",
+              border: "1px solid rgba(24,20,16,0.1)",
+              borderRadius: "var(--rs, 0.9rem)",
+              color: "var(--soft)",
+              fontSize: "0.86rem",
+              lineHeight: 1.55,
+              maxWidth: "48rem",
+            }}
+          >
+            {dict.privacyNote(BRIEFING_TTL_DAYS)}
+          </p>
+
           {/* Optional: email me this day-plan */}
           <div
             style={{
-              marginTop: "clamp(2.5rem,4vw,4rem)",
+              marginTop: "clamp(1.2rem,2vw,1.8rem)",
               padding: "clamp(1.8rem,3vw,2.4rem)",
               background: "var(--ink-deep)",
               color: "var(--cream)",
@@ -332,7 +461,7 @@ function ReadyView({
 
 const ACCENTS = ["coral", "petrol", "sand"] as const;
 
-function MeetingBriefCard({
+export function MeetingBriefCard({
   meeting,
   index,
   locale,
@@ -439,6 +568,21 @@ function MeetingBriefCard({
                 {meeting.brief.openQuestions.map((q, i) => (
                   <li key={i} className="leading-relaxed">
                     {q}
+                  </li>
+                ))}
+              </ul>
+            </Block>
+          )}
+
+          {(meeting.brief.gaps?.length ?? 0) > 0 && (
+            <Block label={dict.blockGaps} accent="var(--coral-deep)">
+              <ul className="space-y-2 text-[0.88rem]">
+                {meeting.brief.gaps.map((g, i) => (
+                  <li key={i} className="flex gap-2 leading-relaxed" style={{ color: "var(--soft)" }}>
+                    <span aria-hidden style={{ color: "var(--coral-deep)" }}>
+                      !
+                    </span>
+                    <span>{g}</span>
                   </li>
                 ))}
               </ul>
