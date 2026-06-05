@@ -4,6 +4,7 @@
  * Result Page can render typed cards instead of free-form text.
  */
 
+import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import type { CalendarEvent } from "../calendar/ical";
 import type { ResearchBundle } from "../research/research";
@@ -22,6 +23,12 @@ export const meetingBriefSchema = z.object({
   conceptProposal: z.string(),
   openQuestions: z.array(z.string()).default([]),
   citations: z.array(z.object({ label: z.string(), url: z.string() })).default([]),
+  /**
+   * Explizit benannte Recherche-Luecken (z. B. "News-Recherche fehlgeschlagen").
+   * Wird gesetzt, wenn einzelne Queries scheitern. Sichtbar im Brief statt
+   * still verschluckt.
+   */
+  gaps: z.array(z.string()).default([]),
 });
 
 export type MeetingBrief = z.infer<typeof meetingBriefSchema>;
@@ -30,6 +37,18 @@ export interface SynthesiseResult {
   brief: MeetingBrief;
   isMock: boolean;
 }
+
+// Token-Budget: 1500 reichte fuer reichhaltige Briefings nicht immer, das
+// Tool-JSON kam abgeschnitten an (stop_reason=max_tokens) und fiel dann in den
+// Mock. 3000 als Normal-Budget, 4500 fuer den einmaligen Nachschlag bei
+// Truncation.
+const MAX_TOKENS = 3000;
+const MAX_TOKENS_RETRY = 4500;
+
+// Anthropic-Retry auf transiente Fehler (429/Verbindung). Bis zu 3 Versuche.
+const ANTHROPIC_MAX_RETRIES = 2;
+const ANTHROPIC_BASE_BACKOFF_MS = 800;
+const ANTHROPIC_MAX_BACKOFF_MS = 8_000;
 
 function timeFmt(locale: Locale): Intl.DateTimeFormat {
   return new Intl.DateTimeFormat(locale === "en" ? "en-GB" : "de-DE", {
@@ -61,6 +80,11 @@ const BRIEF_TOOL = {
         items: { type: "object", properties: { label: { type: "string" }, url: { type: "string" } }, required: ["label", "url"] },
         description: "Nur Quellen aus dem Recherche-Material oben. Keine erfundenen URLs.",
       },
+      gaps: {
+        type: "array",
+        items: { type: "string" },
+        description: "Benenne hier jede Recherche-Luecke, die dir im Material genannt wurde (z. B. 'News-Recherche fehlgeschlagen'), woertlich uebernommen. Erfinde keine Luecken, lass das Feld leer, wenn keine genannt wurden.",
+      },
     },
     required: ["headline", "status", "companyContext", "talkingPoints", "conceptProposal", "openQuestions"],
   },
@@ -76,42 +100,23 @@ export async function synthesiseMeeting(
   }
 
   const userMessage = buildUserMessage(event, research, locale);
-
   const client = getAnthropic();
 
-  // 60s hard cap. Ohne dieses Limit haengt die Server Action bis der Host
-  // sie killt — der User sieht endlos den processing-Spinner.
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 60_000);
+  // Erster Versuch mit Normal-Budget. Wenn das Modell wegen max_tokens
+  // abbricht (stop_reason="max_tokens"), kann das Tool-JSON abgeschnitten sein
+  // -> einmaliger Nachschlag mit groesserem Budget statt Mock-Fallback.
+  let response = await callBrief(client, userMessage, locale, MAX_TOKENS);
 
-  let response;
-  try {
-    response = await client.messages.create(
-      {
-        model: env.anthropicModel,
-        max_tokens: 1500,
-        system: briefingSystemPrompt(locale),
-        tools: [BRIEF_TOOL],
-        tool_choice: { type: "tool", name: "emit_meeting_brief" },
-        messages: [{ role: "user", content: userMessage }],
-      },
-      { signal: controller.signal },
-    );
-  } catch (err) {
-    if (controller.signal.aborted) {
-      throw new Error(
-        locale === "en"
-          ? "Research synthesis took too long. Please try again."
-          : "Die Recherche-Synthese hat zu lange gedauert. Bitte nochmal versuchen.",
-      );
-    }
-    throw err;
-  } finally {
-    clearTimeout(timeout);
+  if (response.stop_reason === "max_tokens") {
+    // eslint-disable-next-line no-console
+    console.warn("[synthesize] stop_reason=max_tokens, retry mit hoeherem Budget");
+    response = await callBrief(client, userMessage, locale, MAX_TOKENS_RETRY);
   }
 
   const toolBlock = response.content.find((b) => b.type === "tool_use");
   if (!toolBlock || toolBlock.type !== "tool_use") {
+    // eslint-disable-next-line no-console
+    console.error(`[synthesize] kein tool_use Block (stop_reason=${response.stop_reason})`);
     return { brief: buildMockBrief(event, research, locale), isMock: true };
   }
 
@@ -122,7 +127,73 @@ export async function synthesiseMeeting(
     return { brief: buildMockBrief(event, research, locale), isMock: true };
   }
 
-  return { brief: scrubSlop(validated.data), isMock: false };
+  // Recherche-Luecken aus der research-Schicht IMMER spiegeln, auch wenn das
+  // Modell sie nicht aufgegriffen hat. Dedup gegen vom Modell genannte.
+  const merged = mergeGaps(scrubSlop(validated.data), research.gaps);
+  return { brief: merged, isMock: false };
+}
+
+/**
+ * Ein Anthropic-Call mit Retry auf transiente Fehler (RateLimit/Connection).
+ * 60s-Hardcap pro Versuch ueber AbortController. Permanente Fehler werfen sofort.
+ */
+async function callBrief(
+  client: Anthropic,
+  userMessage: string,
+  locale: Locale,
+  maxTokens: number,
+): Promise<Anthropic.Message> {
+  let lastErr: unknown;
+  for (let attempt = 0; attempt <= ANTHROPIC_MAX_RETRIES; attempt++) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 60_000);
+    try {
+      return await client.messages.create(
+        {
+          model: env.anthropicModel,
+          max_tokens: maxTokens,
+          system: briefingSystemPrompt(locale),
+          tools: [BRIEF_TOOL],
+          tool_choice: { type: "tool", name: "emit_meeting_brief" },
+          messages: [{ role: "user", content: userMessage }],
+        },
+        { signal: controller.signal },
+      );
+    } catch (err) {
+      lastErr = err;
+      if (controller.signal.aborted) {
+        throw new Error(
+          locale === "en"
+            ? "Research synthesis took too long. Please try again."
+            : "Die Recherche-Synthese hat zu lange gedauert. Bitte nochmal versuchen.",
+        );
+      }
+      const retryable =
+        err instanceof Anthropic.RateLimitError ||
+        err instanceof Anthropic.APIConnectionError;
+      if (!retryable || attempt === ANTHROPIC_MAX_RETRIES) throw err;
+
+      const wait = Math.min(
+        ANTHROPIC_BASE_BACKOFF_MS * 2 ** attempt + Math.random() * ANTHROPIC_BASE_BACKOFF_MS,
+        ANTHROPIC_MAX_BACKOFF_MS,
+      );
+      // eslint-disable-next-line no-console
+      console.warn(`[synthesize] Anthropic transient error, retry in ${Math.round(wait)}ms`);
+      await new Promise((r) => setTimeout(r, wait));
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+  throw lastErr instanceof Error ? lastErr : new Error("Anthropic call failed");
+}
+
+/** Fuegt research-Luecken in den Brief ein, dedupliziert gegen bereits genannte. */
+function mergeGaps(brief: MeetingBrief, researchGaps: string[]): MeetingBrief {
+  if (researchGaps.length === 0) return brief;
+  const existing = new Set(brief.gaps.map((g) => g.trim().toLowerCase()));
+  const extra = researchGaps.filter((g) => !existing.has(g.trim().toLowerCase()));
+  if (extra.length === 0) return brief;
+  return { ...brief, gaps: [...brief.gaps, ...extra] };
 }
 
 function buildUserMessage(event: CalendarEvent, research: ResearchBundle, locale: Locale): string {
@@ -177,6 +248,14 @@ function buildUserMessage(event: CalendarEvent, research: ResearchBundle, locale
     ) {
       lines.push(en ? "(no sources found)" : "(keine Quellen gefunden)");
     }
+  }
+
+  // Recherche-Luecken explizit an das Modell geben, damit sie im Brief landen
+  // statt still verloren zu gehen.
+  if (research.gaps.length > 0) {
+    lines.push("");
+    lines.push(en ? "RESEARCH GAPS (name these in the gaps field):" : "RECHERCHE-LUECKEN (im Feld gaps benennen):");
+    for (const g of research.gaps) lines.push(`- ${g}`);
   }
 
   lines.push("");
@@ -245,6 +324,11 @@ function scrubSlop(brief: MeetingBrief): MeetingBrief {
   };
 }
 
+/**
+ * Ehrlicher Demo-Brief, wenn keine Recherche moeglich ist (kein Key). Wird
+ * klar als "Demo ohne Recherche" gekennzeichnet und tarnt sich NICHT als
+ * echte Talking Points. Kein Entwickler-Jargon im nutzersichtbaren Text.
+ */
 function buildMockBrief(
   event: CalendarEvent,
   research: ResearchBundle,
@@ -255,40 +339,43 @@ function buildMockBrief(
   return {
     headline: event.summary,
     status: note
-      ? `${en ? "Mock briefing" : "Mock-Briefing"}: ${note}`
+      ? `${en ? "Demo without research" : "Demo ohne Recherche"}: ${note}`
       : en
-        ? "Mock briefing: no LLM and/or research sources available."
-        : "Mock-Briefing: keine LLM- und/oder Recherche-Quellen verfuegbar.",
+        ? "Demo without research: this briefing is built from the calendar entry only, with no live web research."
+        : "Demo ohne Recherche: dieses Briefing entsteht nur aus dem Kalender-Eintrag, ohne Live-Web-Recherche.",
     companyContext: research.hints.companyGuess
       ? en
-        ? `Company (guess): ${research.hints.companyGuess}. Once a Tavily key is set, this block fills automatically.`
-        : `Firma (Vermutung): ${research.hints.companyGuess}. Sobald Tavily-Key gesetzt ist, fuellt sich dieser Block automatisch.`
+        ? `Company (guess from the meeting): ${research.hints.companyGuess}. With research switched on, this block fills with real context.`
+        : `Firma (aus dem Termin geraten): ${research.hints.companyGuess}. Mit eingeschalteter Recherche fuellt sich dieser Block mit echtem Kontext.`
       : en
-        ? "Company unclear — the meeting title gives no domain hint and there are no external attendees."
-        : "Firma nicht eindeutig — Termin-Titel liefert keinen Domain-Hint und es gibt keine externen Attendees.",
+        ? "Company unclear: the meeting title gives no hint and there are no external attendees."
+        : "Firma nicht eindeutig: der Termin-Titel liefert keinen Hinweis und es gibt keine externen Teilnehmer.",
     personContext: research.hints.personGuess
       ? en
-        ? `Person (guess): ${research.hints.personGuess}.`
-        : `Person (Vermutung): ${research.hints.personGuess}.`
+        ? `Person (guess from the meeting): ${research.hints.personGuess}.`
+        : `Person (aus dem Termin geraten): ${research.hints.personGuess}.`
       : undefined,
     recentNews: [],
     talkingPoints: en
       ? [
-          "Check the company's current situation",
-          "Who's in the meeting? Clarify role and responsibility",
-          "Define the concrete goal of the conversation",
+          "This is a demo view: real talking points appear once research is active.",
+          "For now, prep from your own notes on this meeting.",
         ]
       : [
-          "Aktuelle Situation der Firma checken",
-          "Wer sitzt im Termin? Rolle und Zustaendigkeit klaeren",
-          "Konkretes Ziel des Gespraechs definieren",
+          "Das ist eine Demo-Ansicht: echte Gespraechs-Anker erscheinen, sobald die Recherche aktiv ist.",
+          "Bis dahin: bereite dich aus deinen eigenen Notizen zum Termin vor.",
         ],
     conceptProposal: en
-      ? "Set the Anthropic and Tavily keys in .env.local so the tool delivers real synthesis. In mock mode this is just a placeholder."
-      : "Setze die Anthropic- und Tavily-Keys in .env.local, damit das Tool eine echte Synthese liefert. Im Mock-Modus ist hier nur ein Platzhalter.",
+      ? "Real research is off for this run, so this is a placeholder view rather than a usable briefing."
+      : "Fuer diesen Lauf ist die echte Recherche aus, daher ist dies eine Platzhalter-Ansicht und kein einsatzfertiges Briefing.",
     openQuestions: en
       ? ["What exactly is this meeting about?"]
       : ["Worum geht es genau in diesem Termin?"],
     citations: [],
+    gaps: [
+      en
+        ? "No live web research in this demo view."
+        : "Keine Live-Web-Recherche in dieser Demo-Ansicht.",
+    ],
   };
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
+import { useActionState, useMemo } from "react";
 import {
   createBriefingPublicAction,
   type PublicBriefingState,
@@ -12,9 +12,9 @@ interface Props {
 }
 
 /**
- * Barrier-free calendar entry. iCal URL + date + optional delivery email +
- * optional CRM/contact fields. Posts to the PUBLIC action — no login. The
- * email is for delivery only, never a gate.
+ * Barrier-free calendar entry. iCal URL + date + optional delivery email.
+ * Posts to the PUBLIC action — no login. The email is for delivery only,
+ * never a gate.
  */
 export function CalendarForm({ locale }: Props) {
   const dict = t(locale).form;
@@ -22,7 +22,6 @@ export function CalendarForm({ locale }: Props) {
     createBriefingPublicAction,
     {},
   );
-  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const dateOptions = useMemo(() => buildDateOptions(locale, dict.today, dict.tomorrow), [
     locale,
@@ -93,50 +92,6 @@ export function CalendarForm({ locale }: Props) {
         />
         <p className="field__hint">{dict.emailHint}</p>
       </div>
-
-      <button
-        type="button"
-        className="calform__advanced-toggle"
-        aria-expanded={showAdvanced}
-        onClick={() => setShowAdvanced((v) => !v)}
-      >
-        <span aria-hidden>{showAdvanced ? "–" : "+"}</span> {dict.advancedToggle}
-      </button>
-
-      {showAdvanced && (
-        <div className="calform__advanced">
-          <div className="field">
-            <label htmlFor="crmApiKey" className="field__label">
-              {dict.crmLabel}
-            </label>
-            <input
-              id="crmApiKey"
-              name="crmApiKey"
-              type="text"
-              autoComplete="off"
-              placeholder={dict.crmPlaceholder}
-              className="field__input"
-              disabled={isPending}
-            />
-            <p className="field__hint">{dict.crmHint}</p>
-          </div>
-          <div className="field">
-            <label htmlFor="contactMail" className="field__label">
-              {dict.contactMailLabel}
-            </label>
-            <input
-              id="contactMail"
-              name="contactMail"
-              type="email"
-              autoComplete="off"
-              placeholder={dict.contactMailPlaceholder}
-              className="field__input"
-              disabled={isPending}
-            />
-            <p className="field__hint">{dict.contactMailHint}</p>
-          </div>
-        </div>
-      )}
 
       {state.error && (
         <div className="notice notice--error" role="alert">
